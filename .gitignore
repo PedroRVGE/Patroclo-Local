@@ -1,0 +1,35 @@
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Repos del profesor: material de consulta, no parte del repo
+referencias/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# Archivos subidos por los usuarios
+subidas/
+backend/subidas/
+
+# Editor / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude Code (configuración local de la máquina)
+.claude/settings.local.json
+
+# graphify
+graphify-out/

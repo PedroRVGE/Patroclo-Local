@@ -1,0 +1,26 @@
+[project]
+name = "patroclo-local"
+version = "0.1.0"
+description = "API de Patroclo: agente RAG experto en lácteos de cabra (LangGraph + Ollama + pgvector)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.143.3",
+    "httpx>=0.28.1",
+    "psycopg[binary]>=3.3.6",
+    "pydantic-settings>=2.16.0",
+    "sqlalchemy>=2.1.5",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[tool.uv]
+# Aplicación, no librería: no se empaqueta, se ejecuta desde backend/.
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

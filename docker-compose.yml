@@ -1,0 +1,58 @@
+# Patroclo-Local — servicios del proyecto.
+#
+# Ollama NO está aquí a propósito: corre en su propio contenedor con GPU
+# (`ollama-gpu`, puerto 11434) y ya tiene los modelos descargados. La API llega a
+# él por host.docker.internal.
+#
+# Uso:
+#   docker compose up -d postgres        # solo la base (backend corriendo fuera con uv)
+#   docker compose up -d --build         # base + API
+#
+# Todas las credenciales salen de .env (copiar .env.example → .env).
+
+services:
+
+  # PostgreSQL 16 + pgvector: vectores, usuarios, documentos e historial.
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: patroclo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # Solo en 127.0.0.1: la base nunca queda expuesta a la red local.
+      - "127.0.0.1:${PG_PUERTO:-5435}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # API FastAPI (backend/).
+  api:
+    build: ./backend
+    container_name: patroclo-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Dentro de la red de compose la base se llama `postgres` y escucha en 5432,
+      # sin importar el puerto que se publique hacia el host.
+      PG_HOST: postgres
+      PG_PUERTO: "5432"
+      OLLAMA_URL: ${OLLAMA_URL_DOCKER:-http://host.docker.internal:11434}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${API_PUERTO:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    name: patroclo-pgdata

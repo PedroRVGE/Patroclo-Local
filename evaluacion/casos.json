@@ -1,0 +1,26 @@
+{
+  "descripcion": "Casos de evaluación de Patroclo-Local. Sirven para las pruebas del grafo, para calibrar UMBRAL_DISTANCIA y para comparar modelos. 'debe' es responder | rechazar | saludar. 'debe_mencionar' son ideas que la respuesta tiene que contener (no textos exactos). 'fuente_esperada' es el archivo de conocimiento/ que debería aparecer entre las fuentes.",
+  "actualizado": "2026-10-17",
+  "casos": [
+    {"id": "R01", "pregunta": "¿Qué quesos vende Del Pastor?", "debe": "responder", "debe_mencionar": ["tipo griego", "feta en bloque", "ibérico", "crema"], "fuente_esperada": "02-catalogo-del-pastor.md"},
+    {"id": "R02", "pregunta": "¿Qué presentaciones de feta tienen?", "debe": "responder", "debe_mencionar": ["frasco de 200 g en salmuera", "bloque de 500 g"], "fuente_esperada": "02-catalogo-del-pastor.md"},
+    {"id": "R03", "pregunta": "¿Por qué el ibérico antes se llamaba Manchego?", "debe": "responder", "debe_mencionar": ["Manchego es denominación de origen protegida", "oveja manchega", "el de Del Pastor es de cabra"], "fuente_esperada": "06-queso-iberico-de-cabra.md"},
+    {"id": "R04", "pregunta": "¿El queso tipo griego es lo mismo que el feta?", "debe": "responder", "debe_mencionar": ["es el que muchos conocen como feta", "Feta es DOP de Grecia"], "fuente_esperada": "05-queso-tipo-griego-feta.md"},
+    {"id": "R05", "pregunta": "¿El queso de cabra tiene lactosa?", "debe": "responder", "debe_mencionar": ["sí tiene lactosa", "no es alternativa para intolerantes"], "fuente_esperada": "03-leche-de-cabra.md"},
+    {"id": "R06", "pregunta": "¿Por qué la mantequilla de cabra es blanca?", "debe": "responder", "debe_mencionar": ["betacaroteno", "vitamina A incolora"], "fuente_esperada": "14-otros-productos-de-cabra.md"},
+    {"id": "R07", "pregunta": "¿Dónde pastorean las cabras de Del Pastor?", "debe": "responder", "debe_mencionar": ["Cundinamarca", "Antioquia", "Santander"], "fuente_esperada": "01-del-pastor-la-marca.md"},
+    {"id": "R08", "pregunta": "Dame una receta con queso crema de cabra", "debe": "responder", "debe_mencionar": ["ingredientes", "pasos"], "fuente_esperada": "11-recetas-queso-crema.md"},
+    {"id": "R09", "pregunta": "¿Cómo conservo el feta después de abrirlo?", "debe": "responder", "debe_mencionar": ["cubierto por la salmuera", "utensilio limpio", "no congelar"], "fuente_esperada": "13-conservacion-y-seguridad.md"},
+    {"id": "R10", "pregunta": "¿Con qué combina el queso ibérico?", "debe": "responder", "debe_mencionar": ["bocadillo veleño", "frutos secos o frutas"], "fuente_esperada": "12-acompanamientos-y-tablas.md"},
+    {"id": "R11", "pregunta": "¿Cómo se hace un queso tipo feta?", "debe": "responder", "debe_mencionar": ["cuajo", "salmuera", "proceso general, no la receta de la empresa"], "fuente_esperada": "08-como-se-hace-el-queso-de-cabra.md"},
+    {"id": "R12", "pregunta": "¿Cómo hago un pedido?", "debe": "responder", "debe_mencionar": ["WhatsApp +57 300 998 5423"], "fuente_esperada": "01-del-pastor-la-marca.md"},
+    {"id": "X01", "pregunta": "¿Cuál es la mejor receta de sushi?", "debe": "rechazar", "motivo": "fuera de dominio"},
+    {"id": "X02", "pregunta": "¿Quién ganó el Mundial de 2022?", "debe": "rechazar", "motivo": "fuera de dominio"},
+    {"id": "X03", "pregunta": "¿Cuánto cuesta el queso feta?", "debe": "rechazar", "motivo": "la base no tiene precios; puede remitir al WhatsApp, pero no inventar un precio"},
+    {"id": "X04", "pregunta": "¿En qué año se fundó Del Pastor y quién la fundó?", "debe": "rechazar", "motivo": "la base dice explícitamente que no lo sabe; no inventar"},
+    {"id": "X05", "pregunta": "¿Qué vino va bien con el queso ibérico?", "debe": "rechazar", "motivo": "los vinos solo están en demo-carga/; debe responder DESPUÉS de subir la guía"},
+    {"id": "X06", "pregunta": "¿Cuál es la receta exacta con la que Del Pastor produce su feta?", "debe": "rechazar", "motivo": "receta de producción propia: no está en la base"},
+    {"id": "S01", "pregunta": "Hola, ¿qué tal?", "debe": "saludar", "motivo": "saludo cordial que explica de qué puede hablar"},
+    {"id": "H01", "pregunta": "¿Qué es el queso ibérico de Del Pastor?", "seguimiento": "¿Y con qué lo sirvo?", "debe": "responder", "motivo": "el seguimiento necesita el historial para saber que 'lo' es el ibérico", "fuente_esperada": "12-acompanamientos-y-tablas.md"}
+  ]
+}
