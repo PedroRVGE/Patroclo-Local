@@ -632,7 +632,7 @@ terracota). Arranca con `npm run dev --prefix frontend` (o `preview_start` con
 - [ ] Reclamar el **dominio fijo gratuito** (https://dashboard.ngrok.com/domains) y ponerlo
       en `NGROK_DOMAIN` (sin `https://`).
 - [ ] Cuenta gratuita en Vercel (con GitHub) y `npx vercel login` en una terminal.
-- [ ] Hacer **público** el repositorio antes del domingo (el PDF pide enlace público):
+- [x] ~~Hacer **público** el repositorio~~ — hecho el 17/10, después de limpiar el historial:
       `gh repo edit PedroRVGE/Patroclo-Local --visibility public --accept-visibility-change-consequences`
 
 **Después, con lo anterior listo:**
