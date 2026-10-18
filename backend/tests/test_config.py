@@ -24,6 +24,17 @@ def test_secreto_jwt_corto_no_arranca():
         Configuracion(postgres_password="x", jwt_secreto="corto", _env_file=None)
 
 
+def test_no_arranca_con_los_valores_de_ejemplo_de_env_example():
+    from pathlib import Path
+
+    ejemplo = (Path(__file__).resolve().parents[2] / ".env.example").read_text(encoding="utf-8")
+    valores = dict(l.split("=", 1) for l in ejemplo.splitlines() if "=" in l and not l.startswith("#"))
+    with pytest.raises(ValueError, match="valor de ejemplo"):
+        Configuracion(postgres_password=valores["POSTGRES_PASSWORD"], jwt_secreto="s" * 40, _env_file=None)
+    with pytest.raises(ValueError, match="valor de ejemplo"):
+        Configuracion(postgres_password="x", jwt_secreto=valores["JWT_SECRETO"], _env_file=None)
+
+
 def test_los_secretos_no_salen_al_imprimir_la_configuracion():
     cfg = Configuracion(postgres_password="clave-de-la-base", jwt_secreto="secreto-jwt-" * 4, _env_file=None)
     impreso = f"{cfg!r} {cfg} {cfg.model_dump()}"

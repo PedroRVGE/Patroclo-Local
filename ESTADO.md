@@ -16,8 +16,8 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 | 4 | Grafo LangGraph + pruebas + calibrar umbral | ✅ 17/10 |
 | 5 | `/api/chat` + historial | ✅ 17/10 |
 | 6 | Frontend | ✅ 17/10 |
-| 7 | Despliegue (frontend en la nube + ngrok) | ⏳ siguiente |
-| 8 | README, diagrama, capturas | — |
+| 7 | Despliegue (frontend en la nube + ngrok) | ⏸️ **pendiente**: preparado, faltan las cuentas de Pedro (ver «Faltantes») |
+| 8 | README, diagrama, capturas | 🟡 README y capturas para revisión (17/10); falta la sección de despliegue con URLs |
 
 ## Cómo está el entorno (17/10/2026)
 
@@ -604,3 +604,69 @@ terracota). Arranca con `npm run dev --prefix frontend` (o `preview_start` con
 6. **TypeScript 7 (el compilador nativo nuevo) es la última versión en npm:** se fijó
    `typescript ~5.9`, más probada con Vite y los tipos de React. Y `FormEvent` está obsoleto
    en los tipos de React 19: se usa `SyntheticEvent`.
+
+---
+
+## Paso 7 — Despliegue: PREPARADO, PENDIENTE (17/10/2026)
+
+**Ya está hecho (commit `491256e`)**
+
+- `docker-compose.yml`: servicio `ngrok` (imagen `ngrok/ngrok:3`) detrás del perfil
+  **`publico`**. `docker compose up` no expone nada; para publicar hay que pedirlo:
+  `docker compose --profile publico up -d`. Usa un **dominio fijo** (`NGROK_DOMAIN`) para
+  que la URL del backend no cambie al reiniciar. El panel de ngrok queda solo en
+  `http://127.0.0.1:4040`.
+- `ORIGEN_FRONTEND` acepta varios orígenes separados por comas (local + nube); `*` se
+  rechaza al arrancar. Pruebas en `tests/test_config.py`.
+- `frontend/vercel.json`: todas las rutas sirven `index.html` (si no, recargar
+  `/chat/<id>` daría 404) y cabeceras de seguridad (`nosniff`, `DENY` en iframes).
+- El frontend ya manda `ngrok-skip-browser-warning` y el CORS del backend la acepta.
+- `.env` tiene las líneas `NGROK_AUTHTOKEN=` y `NGROK_DOMAIN=` vacías, listas para llenar.
+
+### ⏳ Faltantes
+
+**Los hace Pedro (son sus cuentas y sus secretos; Claude no los maneja):**
+
+- [ ] Cuenta gratuita en ngrok → copiar el **authtoken**
+      (https://dashboard.ngrok.com/get-started/your-authtoken) a `NGROK_AUTHTOKEN` en `.env`.
+- [ ] Reclamar el **dominio fijo gratuito** (https://dashboard.ngrok.com/domains) y ponerlo
+      en `NGROK_DOMAIN` (sin `https://`).
+- [ ] Cuenta gratuita en Vercel (con GitHub) y `npx vercel login` en una terminal.
+- [ ] Hacer **público** el repositorio antes del domingo (el PDF pide enlace público):
+      `gh repo edit PedroRVGE/Patroclo-Local --visibility public --accept-visibility-change-consequences`
+
+**Después, con lo anterior listo:**
+
+- [ ] `docker compose --profile publico up -d` y comprobar `https://<NGROK_DOMAIN>/health`.
+- [ ] `npx vercel deploy --prod` desde `frontend/` con `VITE_API_URL=https://<NGROK_DOMAIN>`.
+- [ ] Agregar la URL de Vercel a `ORIGEN_FRONTEND` y poner `MOSTRAR_DOCS=false`; reiniciar
+      la API.
+- [ ] Probar el flujo completo desde la URL de Vercel, **también desde el celular**.
+- [ ] Anotar aquí y en el README las dos URLs públicas, las variables usadas y los problemas
+      que salgan (PDF §3.5).
+
+**Riesgos conocidos del despliegue (para el documento técnico):**
+
+- **El PC de Pedro tiene que estar prendido** (con Docker y `ollama-gpu`) durante la demo.
+- **Mientras ngrok esté arriba, cualquiera con la URL puede registrarse** y usar la GPU o
+  subir documentos (el PDF exige registro abierto). Mitigación: ngrok solo durante pruebas y
+  la sustentación (`docker compose stop ngrok` para apagarlo).
+- ngrok gratuito muestra una página de aviso a los navegadores; la cabecera
+  `ngrok-skip-browser-warning` la evita en las llamadas del frontend, pero abrir la URL de la
+  API directamente en el navegador sí la muestra.
+
+---
+
+## Preparación para revisión de compañeros (17/10/2026)
+
+- **`README.md`** completo para que otra persona entienda y corra el proyecto: qué cumple del
+  enunciado, arquitectura (Mermaid), el grafo y los 7 controles, tecnologías, cómo correrlo
+  en otro PC (incluido cómo levantar Ollama si no lo tienen), pruebas y evaluación,
+  estructura, API, despliegue pendiente, limitaciones y una **guía de revisión** de 20–30 min.
+- **`docs/capturas/`**: 5 capturas de la prueba del paso 6 (ingreso, respuesta con fuentes,
+  rechazo con recorrido, documentos, celular).
+- **Problema encontrado al escribir el README:** el valor de ejemplo de `JWT_SECRETO` en
+  `.env.example` medía más de 32 caracteres, así que **quien copiara el archivo sin cambiarlo
+  arrancaba la API con un secreto publicado en GitHub**. Ahora la configuración rechaza
+  cualquier `POSTGRES_PASSWORD` o `JWT_SECRETO` que empiece por `<CAMBIAR` (prueba en
+  `test_config.py`, que lee el `.env.example` real). **77 pruebas.**

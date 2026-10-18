@@ -10,7 +10,7 @@ Se usa pydantic-settings en vez de os.getenv suelto por tres razones:
 from functools import lru_cache
 from urllib.parse import quote_plus
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -68,6 +68,15 @@ class Configuracion(BaseSettings):
     # /docs y /openapi.json describen la API entera. Útiles en local; en el despliegue
     # público se apagan (MOSTRAR_DOCS=false).
     mostrar_docs: bool = True
+
+    @field_validator("postgres_password", "jwt_secreto")
+    @classmethod
+    def no_dejar_el_ejemplo(cls, valor: SecretStr, info) -> SecretStr:
+        # .env.example trae «<CAMBIAR-…>» y es público en GitHub: arrancar con ese valor
+        # sería usar un secreto que conoce cualquiera.
+        if valor.get_secret_value().startswith("<CAMBIAR"):
+            raise ValueError(f"{info.field_name.upper()} sigue con el valor de ejemplo: cámbialo en .env")
+        return valor
 
     @property
     def origenes_frontend(self) -> list[str]:
