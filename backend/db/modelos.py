@@ -5,10 +5,14 @@ permite adivinar el siguiente.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Uuid, func
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, Uuid, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+# JSONB en Postgres (binario, indexable); JSON genérico en SQLite (pruebas).
+JSONFlexible = JSON().with_variant(JSONB(), "postgresql")
 
 
 class Base(DeclarativeBase):
@@ -56,6 +60,46 @@ class Documento(Base):
     visibilidad: Mapped[str] = mapped_column(String(10), default="interno")
 
     autor: Mapped["Usuario | None"] = relationship(lazy="joined")
+
+
+class Conversacion(Base):
+    __tablename__ = "conversacion"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    # Si se borra el usuario, se borran sus conversaciones.
+    usuario_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("usuario.id", ondelete="CASCADE"), index=True)
+    titulo: Mapped[str] = mapped_column(String(120))  # la primera pregunta, recortada
+    creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Para ordenar la lista por la última actividad.
+    actualizada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    mensajes: Mapped[list["Mensaje"]] = relationship(
+        back_populates="conversacion",
+        order_by="Mensaje.creado_en",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+
+class Mensaje(Base):
+    """Un mensaje del usuario o de Patroclo. Los de Patroclo guardan cómo se llegó a la
+    respuesta (fuentes y pasos por el grafo), para mostrarlos de nuevo al abrir el historial."""
+
+    __tablename__ = "mensaje"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    conversacion_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("conversacion.id", ondelete="CASCADE"), index=True
+    )
+    rol: Mapped[str] = mapped_column(String(10))  # usuario | asistente
+    contenido: Mapped[str] = mapped_column(Text)
+    fuentes: Mapped[list | None] = mapped_column(JSONFlexible, nullable=True)
+    pasos: Mapped[list | None] = mapped_column(JSONFlexible, nullable=True)
+    rechazada: Mapped[bool] = mapped_column(Boolean, default=False)
+    tiempo_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+    conversacion: Mapped[Conversacion] = relationship(back_populates="mensajes")
 
 
 class TokenRevocado(Base):

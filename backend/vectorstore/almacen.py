@@ -21,7 +21,7 @@ from db.conexion import obtener_engine
 @lru_cache
 def obtener_embeddings() -> OllamaEmbeddings:
     cfg = obtener_configuracion()
-    return OllamaEmbeddings(model=cfg.embedding_model, base_url=cfg.ollama_url)
+    return OllamaEmbeddings(model=cfg.embedding_model, base_url=cfg.ollama_url, keep_alive=cfg.ollama_keep_alive_s)
 
 
 @lru_cache

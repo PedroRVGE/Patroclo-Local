@@ -14,8 +14,8 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 | 2 | Autenticación completa y probada | ✅ 17/10 |
 | 3 | Ingesta: subir, listar, borrar, semilla | ✅ 17/10 |
 | 4 | Grafo LangGraph + pruebas + calibrar umbral | ✅ 17/10 |
-| 5 | `/api/chat` + historial | ⏳ siguiente |
-| 6 | Frontend | — |
+| 5 | `/api/chat` + historial | ✅ 17/10 |
+| 6 | Frontend | ⏳ siguiente |
 | 7 | Despliegue (frontend en la nube + ngrok) | — |
 | 8 | README, diagrama, capturas | — |
 
@@ -439,3 +439,90 @@ Otros problemas:
 función de guardado desde afuera; la API la conectará con las tablas `conversacion` y
 `mensaje`. Las respuestas del modelo 2b tardan ≈14 s: el frontend necesita el indicador
 de «pensando».
+
+---
+
+## Paso 5 — `/api/chat` e historial persistente (17/10/2026)
+
+**Qué se hizo**
+
+| Ruta | Qué hace |
+|---|---|
+| `POST /api/chat` `{pregunta, conversacion_id?}` | Pasa la pregunta por el grafo. Responde `{respuesta, conversacion_id, fuentes[], pasos[], rechazada, tiempo_ms, con_historial}`. Sin `conversacion_id` abre una conversación nueva |
+| `GET /api/conversaciones` | Las del usuario, la más reciente primero, con número de mensajes |
+| `GET /api/conversaciones/{id}` | Todos los mensajes, con las fuentes y los pasos de cada respuesta |
+| `DELETE /api/conversaciones/{id}` | Borra la conversación y sus mensajes (cascada) |
+
+- Tablas `conversacion` (id, usuario_id, titulo, creada_en, actualizada_en) y `mensaje`
+  (id, conversacion_id, rol, contenido, fuentes JSONB, pasos JSONB, rechazada, tiempo_ms,
+  creado_en).
+- `services/historial.py` (crear, obtener, últimos 6 mensajes para el grafo, guardar la
+  interacción, listar, borrar) y `services/chat.py` (`responder()`: conversación →
+  historial → grafo → respuesta).
+- **El grafo se compila una sola vez** (`obtener_grafo()` con `lru_cache`). Lo que cambia por
+  petición —cómo guardar en la sesión de base de datos de ESA petición— le llega al nodo
+  `guardar_historial` por `config["configurable"]["guardar"]`, el mecanismo de LangGraph
+  para pasar dependencias por ejecución.
+- **Precalentamiento:** al arrancar, la API carga los dos modelos en un hilo aparte, y
+  `keep_alive` de 30 min (antes, el de Ollama: 5 min).
+- 10 pruebas nuevas en `test_chat.py` (**72 en total**).
+
+**Por qué así**
+
+- **Historial en Postgres, no en RAM ni en `MemorySaver`:** sobrevive a reinicios, se puede
+  listar y borrar desde el frontend, y cada respuesta guardada conserva sus fuentes y
+  pasos (al reabrir una conversación se ve todo igual).
+- **Conversación ajena = 404, no 403:** no revela que existe.
+- **Si el modelo falla, nada queda a medias:** la conversación nueva se crea con `flush()`
+  (tiene id pero no está confirmada) y se confirma junto con los mensajes en
+  `guardar_historial`. Si Ollama cae a mitad del grafo → `rollback()` y 503.
+- **`creado_en` de los mensajes con la hora de Python, no `now()` de Postgres:** `now()`
+  es la hora de *inicio de la transacción*, y la pregunta y la respuesta se guardan en la
+  misma transacción: quedarían con la misma hora y su orden sería ambiguo.
+- **Título = primera pregunta recortada a 80 caracteres:** sin otra llamada al modelo.
+- **Solo los últimos 6 mensajes van al grafo:** con `num_ctx` 4096 y un modelo pequeño, más
+  historial ocupa contexto y confunde al reformulador.
+
+**Cómo se probó**
+
+- `uv run pytest` → **72 pruebas pasan**. Las de chat usan el grafo real con el modelo y la
+  base falsos: abre conversación y responde con fuentes, la interacción queda guardada
+  (con fuentes, pasos y tiempo), el seguimiento usa el historial (el reformulador se llama
+  solo la segunda vez), los rechazos también se guardan, **modelo caído → 503 y no queda
+  ninguna conversación**, la conversación de otro da 404 en las tres rutas, borrar,
+  conversación inexistente, validación (vacía, >1000 caracteres) y título recortado.
+- La prueba que recorre todas las rutas ahora cubre también `/api/chat` y
+  `/api/conversaciones` (401 sin token).
+- **De punta a punta (Docker + Postgres + Ollama, `qwen3.5:2b`):**
+
+| Pregunta | Resultado | Tiempo |
+|---|---|---|
+| ¿Qué es el queso ibérico de Del Pastor? (primera, modelos fríos) | Responde, 4 fuentes | 32 s (15 s cargando qwen, 6 s cargando bge-m3) |
+| ¿Y con qué lo sirvo? (misma conversación) | Reformula con el historial y responde: tablas, tostadas con bocadillo, rallado sobre pasta | 12 s |
+| ¿Qué vino va bien con el queso ibérico? | **Rechazo literal** (el juez dice NO) | 5 s |
+| ¿El queso de cabra tiene lactosa? (primera tras reiniciar, **con precalentamiento**) | Responde y cita | **10,5 s** |
+
+  Recorrido típico de una respuesta: clasificar 1,8 s → recuperar 0,15 s → juez 3 s →
+  generar 6 s.
+
+**Qué falló y cómo se resolvió**
+
+1. **La primera pregunta tardaba 32 s** y Ollama descarga los modelos tras 5 min sin uso
+   (en la demo, cualquier pausa haría lenta la siguiente pregunta). Se agregó
+   `OLLAMA_KEEP_ALIVE_S=1800` a los dos modelos y el precalentamiento al arrancar (20 s, en
+   segundo plano). La primera pregunta bajó a 10,5 s.
+2. **`OllamaEmbeddings.keep_alive` solo acepta segundos (int)**, mientras que `ChatOllama`
+   acepta también `"30m"`. Se usa un entero en los dos.
+3. **El decorador `@paso` tapaba el parámetro `config`:** LangGraph decide si le pasa
+   `config` a un nodo mirando su firma. Con `functools.wraps` la firma visible es la del
+   nodo original, y la envoltura reenvía `**kwargs`.
+4. **Probar con `curl` desde Git Bash daba 400** «error parsing the body»: la terminal le
+   pasa las tildes en cp1252, no en UTF-8. No es un error de la API; se prueba con el JSON
+   escrito en un archivo UTF-8 (`--data-binary @archivo`).
+
+**Limitación conocida (para la sustentación):** el 2b a veces mezcla datos de fragmentos
+cercanos. En «¿Qué es el queso ibérico de Del Pastor?» dijo que el ibérico «es una
+Denominación de Origen Protegida» (la DOP es el Manchego). Las fuentes visibles permiten
+detectarlo, y con `qwen3.5:4b` no pasa (50 s por respuesta). **Preguntas que el 2b responde
+bien para la demo:** lactosa (R05), cabras y regiones (R07), pedido (R12), receta con queso
+crema (R08), mantequilla blanca (R06), y el seguimiento «¿y con qué lo sirvo?».

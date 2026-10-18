@@ -28,6 +28,28 @@ def _instalado(modelo: str, instalados: list[str]) -> bool:
     return modelo in instalados or f"{modelo}:latest" in instalados
 
 
+def precalentar() -> None:
+    """Carga los dos modelos en Ollama (una consulta mínima a cada uno).
+
+    Se llama en segundo plano al arrancar la API: la primera pregunta real no paga los
+    ~20 s de carga. Si falla (Ollama apagado), solo se registra.
+    """
+    import logging
+    import time
+
+    from agents.llm import crear_llm
+    from vectorstore.almacen import obtener_embeddings
+
+    log = logging.getLogger("patroclo.precalentar")
+    inicio = time.perf_counter()
+    try:
+        obtener_embeddings().embed_query("queso de cabra")
+        crear_llm(max_tokens=1).invoke("Hola")
+        log.info("modelos cargados en Ollama en %.1f s", time.perf_counter() - inicio)
+    except ERRORES_OLLAMA as e:
+        log.warning("no se pudieron precalentar los modelos: %s", e)
+
+
 def verificar_modelo_local() -> dict:
     """Dice si Ollama responde y si los dos modelos configurados están descargados."""
     cfg = obtener_configuracion()

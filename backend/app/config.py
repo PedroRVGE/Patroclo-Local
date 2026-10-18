@@ -38,6 +38,11 @@ class Configuracion(BaseSettings):
     # Mismo num_ctx en todas las llamadas: si cambia entre llamadas, Ollama recarga el modelo.
     num_ctx: int = 4096
     temperatura: float = 0.1
+    # Cuánto tiempo deja Ollama el modelo cargado sin uso (su valor por defecto es 5 min;
+    # recargar cuesta ~20 s, así que en la demo una pausa larga haría lenta la siguiente pregunta).
+    ollama_keep_alive_s: int = 1800
+    # Al arrancar la API, carga los dos modelos en segundo plano.
+    precalentar_modelos: bool = True
 
     # --- Agente (RAG) ---
     # Distancia coseno máxima para aceptar un fragmento (menor = más parecido).

@@ -14,6 +14,7 @@ from collections.abc import Callable
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langchain_core.vectorstores import VectorStore
 
 from agents import prompts
@@ -43,10 +44,12 @@ def paso(nombre: str):
     """
 
     def decorador(funcion):
+        # functools.wraps copia la firma: si el nodo declara `config`, LangGraph lo ve y se lo
+        # pasa como argumento con nombre, y la envoltura lo reenvía.
         @functools.wraps(funcion)
-        def envoltura(self, estado: EstadoPatroclo) -> dict:
+        def envoltura(self, estado: EstadoPatroclo, **kwargs) -> dict:
             inicio = time.perf_counter()
-            resultado = funcion(self, estado)
+            resultado = funcion(self, estado, **kwargs)
             ms = round((time.perf_counter() - inicio) * 1000)
             detalle = resultado.pop("detalle", "")
             log.info("nodo %-22s %6d ms  %s", nombre, ms, detalle)
@@ -186,10 +189,14 @@ class NodosPatroclo:
         return {"respuesta": prompts.MENSAJE_SALUDO, "fuentes": [], "rechazada": False, "detalle": "mensaje fijo"}
 
     @paso("guardar_historial")
-    def guardar_historial(self, estado: EstadoPatroclo) -> dict:
-        if self.guardar is None:
+    def guardar_historial(self, estado: EstadoPatroclo, config: RunnableConfig) -> dict:
+        # La función de guardado llega por petición en config["configurable"] (la API la
+        # arma con la sesión de base de datos de esa petición); si no, la del constructor.
+        guardar = (config or {}).get("configurable", {}).get("guardar") or self.guardar
+        if guardar is None:
             return {"detalle": "sin almacenamiento (modo evaluación)"}
-        self.guardar(estado)
+        # El paso de este nodo todavía no está en `pasos`: se agrega a mano lo que se guarda.
+        guardar({**estado, "pasos": [*estado.get("pasos", []), {"nodo": "guardar_historial", "detalle": "guardado", "ms": 0}]})
         return {"detalle": "guardado"}
 
     # ------------------------------------------------------------------ ayudas

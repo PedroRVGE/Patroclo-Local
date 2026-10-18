@@ -4,6 +4,7 @@ Ejecutar (desde backend/):  uv run uvicorn app.main:app --reload
 """
 
 import logging
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,8 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import obtener_configuracion
 from app.errores import registrar_manejadores
-from controllers import auth, documentos, health
+from controllers import auth, chat, documentos, health, historial
 from db.conexion import crear_tablas
+from services.modelo_local import precalentar
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("patroclo")
@@ -28,6 +30,9 @@ async def ciclo_de_vida(app: FastAPI):
         crear_tablas()
     except Exception:
         log.exception("No se pudieron crear las tablas al arrancar (¿Postgres está arriba?)")
+    if cfg.precalentar_modelos:
+        # En un hilo aparte: la API empieza a atender de una vez mientras los modelos cargan.
+        threading.Thread(target=precalentar, name="precalentar", daemon=True).start()
     yield
 
 
@@ -55,3 +60,5 @@ registrar_manejadores(app)
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(documentos.router)
+app.include_router(chat.router)
+app.include_router(historial.router)

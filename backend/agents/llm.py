@@ -28,6 +28,7 @@ def crear_llm(max_tokens: int) -> BaseChatModel:
         temperature=cfg.temperatura,
         num_ctx=cfg.num_ctx,
         num_predict=max_tokens,
+        keep_alive=cfg.ollama_keep_alive_s,
     )
 
 
