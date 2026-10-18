@@ -15,8 +15,8 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 | 3 | Ingesta: subir, listar, borrar, semilla | ✅ 17/10 |
 | 4 | Grafo LangGraph + pruebas + calibrar umbral | ✅ 17/10 |
 | 5 | `/api/chat` + historial | ✅ 17/10 |
-| 6 | Frontend | ⏳ siguiente |
-| 7 | Despliegue (frontend en la nube + ngrok) | — |
+| 6 | Frontend | ✅ 17/10 |
+| 7 | Despliegue (frontend en la nube + ngrok) | ⏳ siguiente |
 | 8 | README, diagrama, capturas | — |
 
 ## Cómo está el entorno (17/10/2026)
@@ -526,3 +526,81 @@ Denominación de Origen Protegida» (la DOP es el Manchego). Las fuentes visible
 detectarlo, y con `qwen3.5:4b` no pasa (50 s por respuesta). **Preguntas que el 2b responde
 bien para la demo:** lactosa (R05), cabras y regiones (R07), pedido (R12), receta con queso
 crema (R08), mantequilla blanca (R06), y el seguimiento «¿y con qué lo sirvo?».
+
+---
+
+## Paso 6 — Frontend (17/10/2026)
+
+**Qué se hizo** — `frontend/`: React 19 + Vite 8 + TypeScript 5.9 + React Router 7. Sin
+librerías de componentes: CSS propio con la identidad de quesería (crema, verde oliva,
+terracota). Arranca con `npm run dev --prefix frontend` (o `preview_start` con
+`.claude/launch.json`); la URL del backend sale de `VITE_API_URL`.
+
+| Archivo | Qué hace |
+|---|---|
+| `src/api/cliente.ts` | Único lugar que conoce la URL; pone `Authorization: Bearer`; traduce errores (red caída, 401, 422 de pydantic, 503 del modelo) a mensajes en español |
+| `src/api/tipos.ts` | Tipos espejo de las respuestas del backend |
+| `src/sesion/Sesion.tsx` | Sesión: token en memoria + `sessionStorage`; al abrir la página valida el token con `/yo`; un 401 en cualquier llamada cierra la sesión |
+| `src/App.tsx` | Rutas; `RutaProtegida` manda a `/ingresar` sin sesión (y vuelve a donde iba) |
+| `src/paginas/Ingreso.tsx` | Ingresar / Crear cuenta, con validación (correo, nombre, 8–128 caracteres, confirmación) |
+| `src/paginas/Chat.tsx` | Historial a la izquierda, mensajes, sugerencias, indicador «pensando… N s», Enter envía |
+| `src/componentes/MensajeAsistente.tsx` | Respuesta + **Fuentes** desplegables (documento, sección/página, similitud %, fragmento) + **Recorrido por el grafo** (cada nodo con su detalle y tiempo) |
+| `src/componentes/TextoRespuesta.tsx` | Markdown mínimo (negrita, listas) y citas `[n]` como botones que abren y resaltan la fuente |
+| `src/paginas/Documentos.tsx` | Arrastrar y soltar, visibilidad, estado de la subida, lista con fragmentos, borrar (solo los propios) |
+| `src/componentes/AvisoServicio.tsx` | Consulta `/health` cada 30 s y avisa si no hay backend, modelo o base |
+
+**Por qué así**
+
+- **`sessionStorage` y no `localStorage`:** la sesión dura lo que la pestaña; el token no
+  queda guardado indefinidamente en el equipo. Al recargar, el token guardado se valida con
+  `/yo` antes de confiar en él.
+- **La respuesta del modelo nunca se inyecta como HTML** (`dangerouslySetInnerHTML`): un
+  renderizador propio arma elementos de React. Si un documento cargado trae `<script>`, se
+  ve como texto. Las citas a fuentes que no existen (`[7]` con 4 fuentes) se muestran como
+  texto, sin vínculo inventado.
+- **Validación en el navegador y otra vez en el backend:** la del navegador es para dar
+  mensajes inmediatos; la que manda es la del servidor.
+- **Rechazo distinto a la vista** (borde terracota y etiqueta «Sin información
+  suficiente») y **recorrido del grafo visible**: en la sustentación se ve, pregunta por
+  pregunta, qué nodo decidió qué (ej.: «4 de 4 pasan el umbral… juez: NO → rechazar»).
+- **Cabecera `ngrok-skip-browser-warning`** en todas las llamadas: ngrok gratuito muestra una
+  página de aviso a los navegadores, que rompería las llamadas a la API (paso 7). Se agregó a
+  `allow_headers` del CORS del backend.
+- **Sin librería de componentes:** menos dependencias y menos que explicar; el CSS son ~300
+  líneas con variables de color.
+
+**Cómo se probó** (navegador integrado contra el backend real en Docker con `qwen3.5:2b`)
+
+| Prueba | Resultado |
+|---|---|
+| Abrir `/` sin sesión | Redirige a `/ingresar` |
+| Crear cuenta con correo inválido, sin nombre, contraseña corta y sin confirmar | Los 4 mensajes de validación, sin llamar al backend |
+| Ingresar con contraseña equivocada | «Correo o contraseña incorrectos.» (el mensaje genérico del backend) |
+| Ingresar bien | Chat con las conversaciones anteriores en el historial |
+| Sugerencia «¿Qué quesos vende Del Pastor?» | Indicador «pensando… N s», respuesta con 4 citas y 4 fuentes; la URL pasa a `/chat/<id>` |
+| Clic en la cita `2` | Abre las fuentes y resalta la 2 |
+| «¿Qué vino va bien con el queso ibérico?» | Rechazo con estilo propio; el recorrido muestra «4 de 4 pasan el umbral (0,43–0,44) → juez: NO → rechazar» |
+| Subir un `.md` de prueba | «Documento procesado: 1 fragmento…»; 17 documentos / 132 fragmentos; solo él tiene «Borrar» |
+| Preguntar por el dato que solo está en ese documento | Responde «viene en presentación de 50 g [1]» citándolo (5,6 s) |
+| Borrarlo | «se borró de la base de conocimiento»; 16 / 131 y **0 vectores suyos en Postgres** |
+| Cerrar sesión | `/salir` → 204 (token revocado), `sessionStorage` vacío, `/documentos` redirige a `/ingresar`, y tras ingresar vuelve a `/documentos` |
+| Celular (375×812) | Encabezado y navegación adaptados; historial como panel con botón; tabla con desplazamiento propio |
+
+**Qué falló y cómo se resolvió**
+
+1. **«Chat» no se marcaba como activo con una conversación abierta** (`/chat/<id>`): el
+   `NavLink` solo coincidía con `/` exacto. Ahora está activo en `/` y `/chat/*`.
+2. **En el celular el botón «Cerrar historial» tapaba «+ Nueva conversación»**, y la «×»
+   de borrar conversaciones solo aparecía con el puntero encima (no existe en una pantalla
+   táctil). Espacio arriba del panel y «×» siempre visible en pantallas pequeñas.
+3. **«1 fragmentos indexados»:** el backend ahora dice «1 fragmento indexado».
+4. **La lista de documentos mostraba la semilla al revés** (90-… primero) porque ordenaba
+   por fecha de subida. Ahora: subidos por usuarios primero (el más reciente arriba) y la
+   semilla en el orden de sus archivos.
+5. **El navegador integrado no puede elegir archivos del disco:** la subida se probó creando
+   el archivo en memoria con JavaScript y pasándoselo al `<input type="file">` de la página;
+   desde ahí el flujo es el real. **La demo con el PDF de `demo-carga/` hay que hacerla a
+   mano** (arrastrarlo a la pantalla Documentos).
+6. **TypeScript 7 (el compilador nativo nuevo) es la última versión en npm:** se fijó
+   `typescript ~5.9`, más probada con Vite y los tipos de React. Y `FormEvent` está obsoleto
+   en los tipos de React 19: se usa `SyntheticEvent`.

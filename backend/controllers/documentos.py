@@ -82,7 +82,11 @@ def subir(
 
     doc = resultado.documento
     if resultado.nuevo:
-        mensaje = f"Documento procesado: {doc.fragmentos} fragmentos indexados."
+        mensaje = (
+            "Documento procesado: 1 fragmento indexado."
+            if doc.fragmentos == 1
+            else f"Documento procesado: {doc.fragmentos} fragmentos indexados."
+        )
     else:
         response.status_code = status.HTTP_200_OK
         mensaje = f"Ese contenido ya estaba en la base («{doc.titulo}»). No se duplicó."

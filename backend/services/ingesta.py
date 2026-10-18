@@ -173,7 +173,12 @@ def _deshacer(almacen: VectorStore, ids: list[str], ruta: Path) -> None:
 
 
 def listar(sesion: Session) -> list[Documento]:
-    return list(sesion.scalars(select(Documento).order_by(Documento.subido_en.desc(), Documento.titulo)))
+    """Primero los subidos por usuarios (el más reciente arriba); después la semilla, en el
+    orden de sus archivos (01-…, 02-…, 90-…)."""
+    documentos = list(sesion.scalars(select(Documento)))
+    subidos = sorted((d for d in documentos if d.subido_por), key=lambda d: d.subido_en, reverse=True)
+    semilla = sorted((d for d in documentos if not d.subido_por), key=lambda d: d.nombre_original)
+    return subidos + semilla
 
 
 def borrar(sesion: Session, almacen: VectorStore, documento_id: uuid.UUID, usuario: Usuario) -> None:

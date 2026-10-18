@@ -17,6 +17,7 @@ __pycache__/
 node_modules/
 dist/
 .vite/
+*.tsbuildinfo
 
 # Archivos subidos por los usuarios
 subidas/
