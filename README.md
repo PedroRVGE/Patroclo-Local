@@ -10,9 +10,10 @@ Trabajo final del curso de Implementación (EIA, semestre 6). Enunciado:
 
 ![Respuesta con fuentes](docs/capturas/02-respuesta-con-fuentes.jpg)
 
-> **Estado (17/10/2026):** backend, agente, frontend y pruebas terminados. **Falta el
-> despliegue en la nube** (todo preparado; faltan las cuentas de ngrok y Vercel). El registro
-> detallado de cada paso, las decisiones y los problemas está en [`ESTADO.md`](ESTADO.md).
+> **Estado (18/10/2026):** completo y **desplegado**.
+> Frontend: **https://patroclo-sigma.vercel.app** · Backend: **https://oligarchic-quintin-bihourly.ngrok-free.dev**
+> (el backend solo responde mientras el PC esté prendido con `docker compose --profile publico up -d`).
+> El registro detallado de cada paso, las decisiones y los problemas está en [`ESTADO.md`](ESTADO.md).
 
 ---
 
@@ -27,7 +28,7 @@ Trabajo final del curso de Implementación (EIA, semestre 6). Enunciado:
 | Base vectorial + carga de documentos desde el frontend | ✅ | PGVector; PDF, TXT, MD, DOCX, CSV |
 | Respuestas fundamentadas en el contexto | ✅ | Citas `[n]` con la fuente y el fragmento visibles |
 | Rechazo explícito sin información | ✅ | Mensaje literal del enunciado; **7 controles** de alucinación |
-| Despliegue en la nube y repositorio documentado | ⏳ | Preparado (ngrok + Vercel); ver [Despliegue](#despliegue-pendiente) |
+| Despliegue en la nube y repositorio documentado | ✅ | Frontend en Vercel, backend por ngrok; ver [Despliegue](#despliegue) |
 
 **Evaluación con 20 casos** ([`evaluacion/casos.json`](evaluacion/casos.json)):
 **20/20** con `qwen3.5:2b`, ≈14 s por respuesta (detalle en `ESTADO.md`, paso 4).
@@ -159,11 +160,11 @@ la API queda en http://localhost:8000/docs.
 ### 3. Frontend
 
 ```bash
-npm install --prefix frontend
+cd frontend && npm install
 ```
 
 ```bash
-npm run dev --prefix frontend
+npm run dev
 ```
 
 Abre http://localhost:5173, crea una cuenta y pregunta. Para la demo de carga, arrastra
@@ -231,22 +232,48 @@ Todas las rutas salvo `/health`, registro e ingreso exigen `Authorization: Beare
 
 ---
 
-## Despliegue (pendiente)
+## Despliegue
 
-Preparado y documentado en `ESTADO.md`, paso 7:
+| Qué | URL | Dónde corre |
+|---|---|---|
+| **Frontend** | https://patroclo-sigma.vercel.app | Vercel (proyecto `patroclo`) |
+| **Backend** | https://oligarchic-quintin-bihourly.ngrok-free.dev | PC local, publicado con ngrok (dominio fijo) |
 
-- **Backend:** corre en el PC local y se publica con **ngrok** (dominio fijo gratuito):
-  `docker compose --profile publico up -d` (necesita `NGROK_AUTHTOKEN` y `NGROK_DOMAIN` en
-  `.env`). Sin el perfil, nada queda expuesto a internet.
-- **Frontend:** **Vercel** (`frontend/vercel.json`), con `VITE_API_URL` = la URL de ngrok.
-- Agregar la URL de Vercel a `ORIGEN_FRONTEND` (CORS) y poner `MOSTRAR_DOCS=false`.
+**Para levantarlo** (en el PC donde corre el backend):
 
-URLs públicas: *pendientes.*
+```bash
+docker compose --profile publico up -d
+```
+
+Eso arranca Postgres, la API y el túnel de ngrok. Sin `--profile publico` **nada queda
+expuesto a internet**. Comprobar: `curl https://oligarchic-quintin-bihourly.ngrok-free.dev/health`.
+Para apagar solo el túnel y dejar el proyecto corriendo en local: `docker compose stop ngrok`.
+
+**Variables que cambian respecto a local** (`.env`):
+
+| Variable | Valor desplegado |
+|---|---|
+| `NGROK_AUTHTOKEN` · `NGROK_DOMAIN` | el token de la cuenta y `oligarchic-quintin-bihourly.ngrok-free.dev` |
+| `ORIGEN_FRONTEND` | `http://localhost:5173,https://patroclo-sigma.vercel.app` |
+| `MOSTRAR_DOCS` | `false` (en producción `/docs` responde 404) |
+
+En Vercel, la única variable es `VITE_API_URL` = la URL de ngrok (se lee **al construir**, así
+que si cambia el dominio hay que volver a desplegar). Redesplegar el frontend:
+
+```bash
+cd frontend && npx vercel deploy --prod
+```
+
+**Comprobado el 18/10/2026 sobre las URLs públicas:** `/health` ok; CORS acepta el origen de
+Vercel y rechaza otro con 400; `/api/documentos` sin token → 401; `/docs` → 404; una pregunta
+fuera de dominio devuelve el mensaje literal de rechazo.
 
 ## Limitaciones conocidas
 
 - **El PC tiene que estar prendido durante la demo** (el backend y el modelo corren ahí).
 - **GPU de 4 GB:** ningún modelo de chat cabe entero; `qwen3.5:2b` responde en ≈10–15 s.
+  En el PC usado para el despliegue (18/10) Ollama corre **100 % en CPU** (`ollama ps`) y la
+  misma pregunta tarda **≈45 s**. Es la diferencia más visible en la demo.
 - El modelo de 2B **a veces mezcla datos de fragmentos cercanos** (ej.: llamó DOP al
   ibérico). Las fuentes visibles permiten detectarlo; `qwen3.5:4b` no lo hace, pero tarda 50 s.
 - Con ngrok arriba, **cualquiera con la URL puede registrarse** (el enunciado pide registro

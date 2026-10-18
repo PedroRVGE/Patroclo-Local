@@ -16,8 +16,8 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 | 4 | Grafo LangGraph + pruebas + calibrar umbral | ✅ 17/10 |
 | 5 | `/api/chat` + historial | ✅ 17/10 |
 | 6 | Frontend | ✅ 17/10 |
-| 7 | Despliegue (frontend en la nube + ngrok) | ⏸️ **pendiente**: preparado, faltan las cuentas de Pedro (ver «Faltantes») |
-| 8 | README, diagrama, capturas | 🟡 README y capturas para revisión (17/10); falta la sección de despliegue con URLs |
+| 7 | Despliegue (frontend en la nube + ngrok) | ✅ 18/10 — https://patroclo-sigma.vercel.app + https://oligarchic-quintin-bihourly.ngrok-free.dev |
+| 8 | README, diagrama, capturas | ✅ 18/10 — README con la sección de despliegue y las URLs públicas |
 
 ## Cómo está el entorno (17/10/2026)
 
@@ -607,7 +607,7 @@ terracota). Arranca con `npm run dev --prefix frontend` (o `preview_start` con
 
 ---
 
-## Paso 7 — Despliegue: PREPARADO, PENDIENTE (17/10/2026)
+## Paso 7 — Despliegue: preparación (17/10/2026)
 
 **Ya está hecho**
 
@@ -654,6 +654,77 @@ terracota). Arranca con `npm run dev --prefix frontend` (o `preview_start` con
 - ngrok gratuito muestra una página de aviso a los navegadores; la cabecera
   `ngrok-skip-browser-warning` la evita en las llamadas del frontend, pero abrir la URL de la
   API directamente en el navegador sí la muestra.
+
+---
+
+## Paso 7 (cierre) — Desplegado (18/10/2026)
+
+**URLs públicas**
+
+| Qué | URL |
+|---|---|
+| Frontend | **https://patroclo-sigma.vercel.app** (Vercel, proyecto `patroclo`) |
+| Backend | **https://oligarchic-quintin-bihourly.ngrok-free.dev** (ngrok con dominio fijo, apunta al PC) |
+
+**Lo que se hizo, en orden**
+
+1. `.env` creado desde `.env.example` con contraseña de Postgres y `JWT_SECRETO` generados
+   con `secrets.token_urlsafe`; `NGROK_AUTHTOKEN`, `NGROK_DOMAIN` y `VERCEL_TOKEN` los puso
+   Pedro. El `.env` no se versiona.
+2. `docker compose up -d --build`: Postgres + API. La semilla indexó los **16 archivos**
+   de `conocimiento/` (≈1 min 40 s en este PC) y `/health` quedó en `ok` con los dos modelos.
+3. `docker compose --profile publico up -d`: el túnel de ngrok quedó sirviendo
+   `https://<dominio>/health`.
+4. Frontend: `npm ci` y `npm run build` locales para comprobar que compila; después
+   `vercel link --project patroclo`, `vercel env add VITE_API_URL production` con la URL de
+   ngrok y `vercel deploy --prod`. Vercel construye con esa variable, así que **la URL del
+   backend queda horneada en el bundle**: si cambia el dominio hay que volver a desplegar.
+5. `ORIGEN_FRONTEND` pasó a `http://localhost:5173,https://patroclo-sigma.vercel.app` y
+   `MOSTRAR_DOCS=false`; la API se recreó para tomarlos.
+
+**Comprobaciones sobre las URLs públicas** (todas pasaron)
+
+| Prueba | Resultado |
+|---|---|
+| `GET /health` por ngrok | `ok`, base + `qwen3.5:2b` + `bge-m3` |
+| Preflight `OPTIONS` con `Origin` de Vercel | 200 con `Access-Control-Allow-Origin` del origen |
+| Preflight con un origen ajeno | **400 y sin** cabecera `Allow-Origin` |
+| `GET /api/documentos` sin token | **401** |
+| `GET /docs` en producción | **404** (`MOSTRAR_DOCS=false`) |
+| Ingreso desde el origen de Vercel | token devuelto |
+| Pregunta fuera de dominio («¿quién ganó el mundial de 2022?») | rechazo con el **mensaje literal**, 8,6 s |
+| Bundle publicado en Vercel | contiene la URL de ngrok (la variable sí entró en la construcción) |
+| La página en Chrome | carga la pantalla de ingreso, **0 errores en consola** |
+
+**Problemas encontrados**
+
+1. **El PC donde se desplegó no tenía nada del stack**: no existía el contenedor
+   `ollama-gpu` ni los volúmenes `patroclo-pgdata`/`patroclo-subidas`, y Docker Desktop
+   estaba apagado. Se levantó todo desde cero y se volvieron a descargar `qwen3.5:2b` y
+   `bge-m3`.
+2. **Ollama corre aquí 100 % en CPU** (`ollama ps` → `100% CPU`; no hay `nvidia-smi`): es un
+   Ollama nativo en `localhost:11434`, no el contenedor con GPU. La misma pregunta que en el
+   paso 4 tardaba ≈14 s ahora tarda **≈45 s**. No bloquea la demo, pero hay que contarlo —
+   y si se sustenta en este PC, conviene avisar que cada respuesta tarda casi un minuto.
+3. **`npm install --prefix frontend` (lo que decía el README) falla**: npm busca un
+   `package.json` en la raíz del repositorio y sale con `ENOENT`. Corregido en el README a
+   `cd frontend && npm install`.
+4. **Los dominios fijos gratuitos de ngrok ya terminan en `.ngrok-free.dev`**, no en
+   `.ngrok-free.app`. Corregido el ejemplo en `.env.example`.
+5. **`vercel link` intentó conectar el repositorio de GitHub y falló** («You need admin or
+   write access… (400)»): la app de Vercel no tiene acceso al repo. No importa, porque el
+   despliegue va por CLI desde la carpeta local; si se quiere despliegue automático al hacer
+   push, hay que instalar la app de Vercel en el repositorio desde la web.
+6. Detalle menor: el registro rechaza correos con dominio `.test` (pydantic los considera
+   reservados). Para probar hay que usar un dominio normal (`@example.com`).
+
+**Pendiente de Pedro**
+
+- Entrar a https://patroclo-sigma.vercel.app, crear su cuenta y probar el flujo completo
+  (pregunta buena, rechazo, carga del PDF de vinos) **también desde el celular**.
+- **Rotar los dos secretos después de la sustentación**: el authtoken de ngrok y el token de
+  Vercel pasaron por el chat de la sesión.
+- Apagar el túnel cuando no se esté usando: `docker compose stop ngrok`.
 
 ---
 
