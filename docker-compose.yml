@@ -60,6 +60,27 @@ services:
       postgres:
         condition: service_healthy
 
+  # ngrok: publica la API en internet (despliegue, paso 7). Mismo patrón que
+  # referencias/agente/compose.yml, pero:
+  #   - con dominio fijo (NGROK_DOMAIN): la URL no cambia al reiniciar, así el frontend
+  #     desplegado no hay que reconstruirlo;
+  #   - detrás del perfil «publico»: `docker compose up` NO expone nada a internet;
+  #     hay que pedirlo explícitamente:
+  #       docker compose --profile publico up -d
+  # El panel de inspección queda solo en http://127.0.0.1:4040.
+  ngrok:
+    image: ngrok/ngrok:3
+    container_name: patroclo-ngrok
+    profiles: ["publico"]
+    restart: unless-stopped
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
+    command: ["http", "api:8000", "--url=${NGROK_DOMAIN:-falta-NGROK_DOMAIN-en-.env}"]
+    ports:
+      - "127.0.0.1:4040:4040"
+    depends_on:
+      - api
+
 volumes:
   pgdata:
     name: patroclo-pgdata

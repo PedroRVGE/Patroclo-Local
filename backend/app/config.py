@@ -62,10 +62,19 @@ class Configuracion(BaseSettings):
     jwt_horas: int = 8
 
     # --- API ---
+    # Orígenes a los que CORS deja llamar a la API, separados por comas
+    # (p. ej. «http://localhost:5173,https://patroclo-local.vercel.app»). Nunca «*».
     origen_frontend: str = "http://localhost:5173"
     # /docs y /openapi.json describen la API entera. Útiles en local; en el despliegue
     # público se apagan (MOSTRAR_DOCS=false).
     mostrar_docs: bool = True
+
+    @property
+    def origenes_frontend(self) -> list[str]:
+        origenes = [o.strip().rstrip("/") for o in self.origen_frontend.split(",") if o.strip()]
+        if "*" in origenes:
+            raise ValueError("ORIGEN_FRONTEND no puede ser «*»: pon las URLs exactas del frontend.")
+        return origenes
 
     @property
     def url_base_datos(self) -> str:

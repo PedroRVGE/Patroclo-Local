@@ -50,7 +50,7 @@ app = FastAPI(
 # Authorization (no en cookies), así que no hace falta allow_credentials.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[cfg.origen_frontend],
+    allow_origins=cfg.origenes_frontend,
     allow_methods=["GET", "POST", "DELETE"],
     # ngrok-skip-browser-warning: la manda el frontend para saltar el aviso de ngrok (paso 7).
     allow_headers=["Authorization", "Content-Type", "ngrok-skip-browser-warning"],
