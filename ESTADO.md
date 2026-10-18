@@ -28,7 +28,7 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 | Postgres | Contenedor `patroclo-postgres`, `pgvector/pgvector:pg16`, extensión `vector` 0.8.7, en `127.0.0.1:5435` |
 | API | Contenedor `patroclo-api` en `127.0.0.1:8000`, o `uv run uvicorn app.main:app --reload` desde `backend/` |
 | Python | 3.12.13 manejado por uv (`backend/.python-version`) |
-| GitHub | Repo `PedroRVGE/Patroclo-Local` (ver paso 1) |
+| GitHub | https://github.com/PedroRVGE/Patroclo-Local — **privado** por ahora; el PDF exige enlace público: `gh repo edit PedroRVGE/Patroclo-Local --visibility public --accept-visibility-change-consequences` antes del domingo |
 
 ---
 
