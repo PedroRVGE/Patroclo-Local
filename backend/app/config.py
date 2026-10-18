@@ -33,7 +33,7 @@ class Configuracion(BaseSettings):
     # --- Modelo local (Ollama) ---
     llm_provider: str = "ollama"
     ollama_url: str = "http://localhost:11434"
-    chat_model: str = "qwen3.5:4b"
+    chat_model: str = "qwen3.5:2b"  # elegido con app.evaluar: ver ESTADO.md, paso 4
     embedding_model: str = "bge-m3"
     # Mismo num_ctx en todas las llamadas: si cambia entre llamadas, Ollama recarga el modelo.
     num_ctx: int = 4096

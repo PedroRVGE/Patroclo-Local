@@ -24,7 +24,7 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 | Pieza | Estado |
 |---|---|
 | Ollama | Contenedor **`ollama-gpu`** (no `ollama`), v0.32.15, puerto 11434, CUDA detecta la GTX 1650 (3,2 GB libres de 4 GB) |
-| Modelos | `qwen3.5:4b`, `llama3:latest` y **`bge-m3`** (descargado hoy) |
+| Modelos | **`qwen3.5:2b` (por defecto, paso 4)**, `qwen3.5:4b`, `llama3:latest` y `bge-m3` |
 | Postgres | Contenedor `patroclo-postgres`, `pgvector/pgvector:pg16`, extensión `vector` 0.8.7, en `127.0.0.1:5435` |
 | API | Contenedor `patroclo-api` en `127.0.0.1:8000`, o `uv run uvicorn app.main:app --reload` desde `backend/` |
 | Python | 3.12.13 manejado por uv (`backend/.python-version`) |
@@ -377,3 +377,65 @@ de `05-…feta.md`). La base repite información entre archivos. Por eso el acie
 por comportamiento y la fuente se reporta aparte. *Sugerencia para Pedro:* en `casos.json`,
 R01 podría aceptar también `15-preguntas-frecuentes.md` y R11 `05-queso-tipo-griego-feta.md`
 (no se editó: es material de evaluación ya escrito).
+
+**Comparación de modelos** (`python -m app.evaluar --modelo …`, mismos 20 casos, mismos
+prompts finales, umbral 0,50, k=4; detalle en `evaluacion/resultados-*.json`)
+
+| | `qwen3.5:2b` | `qwen3.5:4b` |
+|---|---|---|
+| Comportamiento correcto | **20/20** | 19/20 (rechaza R11 «¿cómo se hace un feta?»: su juez es más estricto) |
+| Rechazos correctos (X01–X06) | 6/6 | 6/6 |
+| Fuente esperada entre las fuentes | 10/13 | 10/12 |
+| Tiempo medio por respuesta | **14 s** | 50 s |
+| En la GPU | 63 % | 48 % |
+| Velocidad de generación | 13–17 tokens/s | ≈5 tokens/s |
+| Calidad leída a mano | Correcta y citada; a veces agrega una inferencia propia (R06: «el caproico contribuye al color blanco», que no dice la base) y es menos completa (R09 sin «utensilios limpios») | Más precisa y completa (R03, R06, R09 impecables) |
+
+**Decisión: `qwen3.5:2b` por defecto.** Mismo o mejor comportamiento, 3,5× más rápido (en
+una demo de 7–10 min, 50 s por pregunta son demasiados) y sus fallos son del lado seguro.
+*Trade-off aceptado:* redacta peor que el 4b y a veces agrega una inferencia pequeña. Para
+volver al 4b basta `CHAT_MODEL=qwen3.5:4b` en `.env`. En `CLAUDE.md` §4 se actualizó el
+modelo por defecto.
+
+**Cómo se probó**
+
+- `uv run pytest` → **62 pruebas pasan** (16 nuevas del grafo, con modelo y base falsos):
+  cada camino (respuesta, saludo, fuera de dominio), umbral (descarta lejanos y no llama al
+  juez), juez NO → rechazo sin generar, `NO_SE` → rechazo, clasificador confundido →
+  no inventa, corrección por términos del dominio, `<think>` limpiado, «Sí.» con tilde,
+  reformulación solo con historial y fallback si sale vacía, filtro `solo_publico`, pasos
+  con detalle y ms.
+- `uv run pytest -m integracion` → los 20 casos de `casos.json` contra Postgres + Ollama
+  reales (comportamiento y mensaje literal; la fuente esperada solo avisa).
+- `python -m app.evaluar` con los dos modelos (tablas de arriba).
+
+**Qué falló y cómo se resolvió** (iteraciones con `app.evaluar` y `qwen3.5:2b`)
+
+| Iteración | Resultado | Problema encontrado | Cambio |
+|---|---|---|---|
+| 1 | 14/20 (rechazos 6/6) | El clasificador mandó a FUERA_DE_DOMINIO «¿dónde pastorean las cabras de Del Pastor?» y «¿por qué el ibérico se llamaba Manchego?» | Ejemplos en el prompt + **corrección por código**: si nombra términos del dominio, no puede ser FUERA_DE_DOMINIO |
+| 1 | | El juez rechazó R02, R10, R11 teniendo el dato: sus reglas del «NO» pesaban demasiado para un 2B | Juez redactado en positivo («SI si con el contexto se puede responder…»), la estrictez solo para el dato concreto que falta |
+| 1 | | H01: la pregunta reescrita salió cortada («…para servir con él») | El reformulador usaba el modelo de decisión, limitado a 12 tokens: ahora usa el de respuesta |
+| 2 | 19/20 | Leyendo las respuestas: H01 reescrita cambió la pregunta («¿qué *quesos* acompañan al ibérico?»); R06 agregó una causa inventada | Ejemplo de reescritura en el prompt (con otro queso, para no ajustar al caso) y regla «ni causas o conclusiones tuyas» |
+| 2 | | R11 «¿cómo se hace un feta?» rechazada: el juez lo confundía con la regla de «fórmula exacta» (pensada para X06) | La regla dice ahora «fórmula de producción propia de la empresa»; un proceso general sí es respuesta |
+| 3 | **20/20** | R06 aún agrega la frase del caproico | Limitación conocida del modelo de 2B; queda anotada |
+
+Otros problemas:
+
+1. **El 4b no cabe en la GPU** (3,4 GB de pesos, 3,2 GB libres): bajar `num_ctx` de 4096 a
+   3072 no cambió nada (sigue 48 % GPU). La generación, no la lectura del prompt, es el
+   cuello de botella: 200 tokens = 42 s.
+2. **Se probó mover bge-m3 a la CPU** (`num_gpu=0`) para liberar la GPU: la pregunta se
+   vectoriza en 0,2 s en CPU, pero el 2b siguió en 63 % GPU y la ingesta se volvía 5× más
+   lenta (10 fragmentos en 19 s). **Descartado.**
+3. **La fuente esperada no aparece en 3 de las respondidas** aunque la respuesta es correcta:
+   la base repite información (ver arriba). Se reporta aparte en vez de contarla como fallo.
+4. **`fuente_esperada` es un nombre de archivo y la metadata solo tenía el título:** se agregó
+   `archivo` a la metadata de cada fragmento y se reindexó (57 s).
+5. **Los scripts de evaluación corren desde el host** (`uv run`), no dentro del contenedor:
+   `evaluacion/` no está montada en Docker (no hace falta en producción).
+
+**Pendiente para el paso 5:** `guardar_historial` ya existe en el grafo pero recibe la
+función de guardado desde afuera; la API la conectará con las tablas `conversacion` y
+`mensaje`. Las respuestas del modelo 2b tardan ≈14 s: el frontend necesita el indicador
+de «pensando».

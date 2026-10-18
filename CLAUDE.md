@@ -86,7 +86,8 @@ ni frontend. **Eso es lo que construimos encima.**
 **Windows · NVIDIA GTX 1650 (4 GB de VRAM) · ~20 GB de RAM.**
 
 - Un modelo de 7–8B (≈4,7 GB) **no cabe** en 4 GB: se reparte con la RAM y va lento. Por
-  eso **el modelo por defecto es de 3–4B**.
+  eso el modelo por defecto es pequeño: **`qwen3.5:2b`** (decidido en el paso 4 midiendo
+  con `app.evaluar`; ver la tabla de abajo).
 - **Ollama corre en Docker**, en un contenedor aparte llamado **`ollama-gpu`** que Pedro ya tiene
   (volumen `ollama`, puerto 11434). Va **con GPU** (`docker run --gpus=all ...`; Docker
   Desktop en Windows pasa la GPU por WSL2). **No lo metas en el `docker-compose` del
@@ -96,13 +97,13 @@ ni frontend. **Eso es lo que construimos encima.**
 - Para ver los modelos: `docker exec ollama-gpu ollama list`. Para ver si un modelo cargó en la
   GPU: `docker exec ollama-gpu ollama ps` (columna PROCESSOR: debe decir `100% GPU`).
 
-**Modelos instalados (17/10/2026):** `qwen3.5:4b`, `llama3` y `bge-m3` (descargado en el
-paso 1). **Medido:** `qwen3.5:4b` con `num_ctx=4096` ocupa 3,7 GB y queda **52 % CPU / 48 %
-GPU**, ≈4 tokens/s en caliente (detalle en `ESTADO.md`).
+**Modelos instalados (17/10/2026):** `qwen3.5:2b` (descargado en el paso 4), `qwen3.5:4b`,
+`llama3` y `bge-m3` (descargado en el paso 1). Ninguno de los de chat cabe entero en la GPU
+(el 4b queda 48 % en GPU, el 2b 63 %).
 
 | Uso | Por defecto | Alternativa para comparar |
 |---|---|---|
-| Chat | `qwen3.5:4b` (el que mejor cabe en 4 GB, buen español) | `llama3` (8B: no cabe entero en la GPU, más lento) |
+| Chat | **`qwen3.5:2b`**: 20/20 casos, ≈14 s por respuesta | `qwen3.5:4b`: 19/20, ≈50 s por respuesta, redacta mejor. `llama3` (8B) no se evaluó: más lento aún |
 | Embeddings | `bge-m3` (multilingüe, dimensión 1024) | `nomic-embed-text` (más ligero, pensado para inglés) |
 
 **Ojo con el razonamiento de Qwen:** los Qwen recientes pueden «pensar» antes de responder
