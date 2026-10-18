@@ -10,7 +10,7 @@ Se usa pydantic-settings en vez de os.getenv suelto por tres razones:
 from functools import lru_cache
 from urllib.parse import quote_plus
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,8 +36,16 @@ class Configuracion(BaseSettings):
     chat_model: str = "qwen3.5:4b"
     embedding_model: str = "bge-m3"
 
+    # --- Autenticación (JWT propio) ---
+    # Sin valor por defecto a propósito: si falta en .env, la API no arranca.
+    jwt_secreto: SecretStr = Field(min_length=32)
+    jwt_horas: int = 8
+
     # --- API ---
     origen_frontend: str = "http://localhost:5173"
+    # /docs y /openapi.json describen la API entera. Útiles en local; en el despliegue
+    # público se apagan (MOSTRAR_DOCS=false).
+    mostrar_docs: bool = True
 
     @property
     def url_base_datos(self) -> str:

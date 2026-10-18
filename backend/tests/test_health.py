@@ -1,17 +1,6 @@
 """Pruebas de /health sin depender de Postgres ni de Ollama (se simulan)."""
 
-import pytest
-from fastapi.testclient import TestClient
-
 from controllers import health
-
-
-@pytest.fixture
-def cliente(monkeypatch):
-    monkeypatch.setenv("POSTGRES_PASSWORD", "prueba")
-    from app.main import app
-
-    return TestClient(app, raise_server_exceptions=False)
 
 
 def _modelos(chat=True, embeddings=True):
