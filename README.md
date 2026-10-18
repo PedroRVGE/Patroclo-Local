@@ -184,6 +184,7 @@ Desde `backend/`:
 | `uv run pytest -m integracion` | Los 20 casos de `casos.json` contra el modelo y la base reales | Docker + Ollama arriba |
 | `uv run python -m app.evaluar [--modelo X]` | Tabla de los 20 casos (acierto, tiempo, fuente); guarda `evaluacion/resultados-<modelo>.json` | Docker + Ollama |
 | `uv run python -m app.calibrar_umbral` | Distancias por caso para calibrar `UMBRAL_DISTANCIA` | Docker + Ollama |
+| `docker exec patroclo-api python -m app.semilla` | **Sincroniza `conocimiento/` con la base**: indexa lo nuevo, reemplaza lo que cambió y borra lo que ya no está | Docker + Ollama |
 | `docker exec patroclo-api python -m app.semilla --reindexar` | Recalcula todos los vectores (al cambiar `EMBEDDING_MODEL`) | Docker + Ollama |
 
 **Comparación de modelos** (mismos casos y prompts):

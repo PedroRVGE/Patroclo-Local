@@ -57,7 +57,8 @@ def test_markdown_se_fragmenta_por_secciones_con_contexto():
 
 def test_toda_la_base_de_conocimiento_se_fragmenta_bien():
     archivos = [f for f in CONOCIMIENTO.glob("*.md") if f.name != "README.md"]
-    assert len(archivos) == 16
+    # Los 16 archivos iniciales, más los que se vayan agregando a la carpeta.
+    assert len(archivos) >= 16
     for archivo in archivos:
         e = extraer(archivo.read_bytes(), "md")
         assert e.metadatos.get("titulo"), archivo.name

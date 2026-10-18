@@ -1,14 +1,20 @@
-"""Carga la base de conocimiento inicial (conocimiento/*.md) en la base vectorial.
+"""Sincroniza la base de conocimiento (conocimiento/*.md) con la base vectorial.
 
 Uso (desde backend/):
-    uv run python -m app.semilla              # indexa lo que falte (rápido si ya está todo)
+    uv run python -m app.semilla              # deja la base igual a la carpeta
     uv run python -m app.semilla --reindexar  # recalcula TODOS los vectores (p. ej. al
                                               # cambiar EMBEDDING_MODEL)
 
-Es seguro correrlo siempre (el contenedor lo hace al arrancar):
+Un solo comando deja todo al día; es seguro correrlo siempre (el contenedor lo hace al
+arrancar):
 - un archivo que ya está indexado (mismo sha256) no se toca;
+- un archivo nuevo se indexa;
 - si un archivo de conocimiento/ cambió, se borra la versión vieja y se indexa la nueva;
+- si un archivo **ya no está** en la carpeta, su documento y sus vectores se borran;
 - `README.md` no se indexa (explica el formato, no es conocimiento).
+
+Lo que se subió desde el frontend (`subido_por` no nulo) nunca se toca aquí: esos
+documentos se borran desde la pantalla Documentos.
 """
 
 import argparse
@@ -18,7 +24,7 @@ import sys
 import time
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.config import obtener_configuracion
 from db.conexion import crear_tablas, nueva_sesion
@@ -30,10 +36,27 @@ from vectorstore.almacen import obtener_almacen
 log = logging.getLogger("patroclo.semilla")
 
 
+def olvidar_borrados(sesion, almacen, nombres: set[str]) -> list[str]:
+    """Borra los documentos de la semilla cuyo .md ya no está en la carpeta.
+
+    Solo toca los de la semilla (`subido_por` nulo): lo que subió un usuario desde el
+    frontend se borra desde ahí. Devuelve los nombres borrados.
+    """
+    borrados = []
+    previos = list(sesion.scalars(select(Documento).where(Documento.subido_por.is_(None))))
+    for doc in previos:
+        if doc.nombre_original not in nombres:
+            ingesta.eliminar(sesion, almacen, doc)
+            borrados.append(doc.nombre_original)
+    return borrados
+
+
 def sembrar() -> None:
     carpeta = Path(obtener_configuracion().conocimiento_dir)
     archivos = sorted(f for f in carpeta.glob("*.md") if f.name.lower() != "readme.md")
     if not archivos:
+        # Carpeta vacía o mal montada: no se borra nada, que sería destruir la base por
+        # un error de configuración.
         log.warning("No hay archivos .md en %s", carpeta.resolve())
         return
 
@@ -59,7 +82,17 @@ def sembrar() -> None:
                     "  + %-42s %3d fragmentos  %.1f s",
                     archivo.name, resultado.documento.fragmentos, time.perf_counter() - inicio,
                 )
-        log.info("Semilla: %d archivos, %d indexados ahora, %d ya estaban.", len(archivos), nuevos, len(archivos) - nuevos)
+        borrados = olvidar_borrados(sesion, almacen, {a.name for a in archivos})
+        for nombre in borrados:
+            log.info("  - %-42s ya no está en la carpeta: borrado", nombre)
+        sesion.commit()
+        total = sesion.scalar(select(func.count()).select_from(Documento))
+        fragmentos = sesion.scalar(select(func.coalesce(func.sum(Documento.fragmentos), 0)))
+        log.info(
+            "Semilla: %d archivos, %d indexados ahora, %d ya estaban, %d borrados.",
+            len(archivos), nuevos, len(archivos) - nuevos, len(borrados),
+        )
+        log.info("Base de conocimiento: %d documentos, %d fragmentos.", total, fragmentos)
 
 
 def reindexar_todo() -> None:

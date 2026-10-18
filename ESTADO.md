@@ -728,6 +728,38 @@ terracota). Arranca con `npm run dev --prefix frontend` (o `preview_start` con
 
 ---
 
+## La semilla sincroniza la carpeta con la base (18/10/2026)
+
+**Problema encontrado usando el proyecto:** `python -m app.semilla` indexaba lo nuevo y
+reemplazaba lo que cambiaba, pero **no borraba nada**. Si se quitaba un `.md` de
+`conocimiento/`, su documento y sus vectores seguían en la base y el agente los seguía
+citando. Peor: `--reindexar` tampoco lo arregla, porque recalcula los vectores de los
+documentos **que ya están en la base**, no de los archivos de la carpeta — así que un
+documento borrado de la carpeta revivía con vectores nuevos.
+
+**Solución:** `app/semilla.py` ahora **sincroniza**. Un solo comando deja la base igual a la
+carpeta: indexa lo nuevo, reemplaza lo que cambió (por sha256) y **borra los documentos
+cuyo archivo ya no existe**, con sus vectores (`olvidar_borrados`). Al final imprime cuántos
+documentos y fragmentos quedaron.
+
+**Dos salvaguardas:**
+
+- solo toca documentos de la semilla (`subido_por` nulo): lo que un usuario subió desde el
+  frontend no se borra nunca por esta vía;
+- si la carpeta no tiene ningún `.md` (volumen mal montado, por ejemplo), no borra nada:
+  sale con una advertencia, porque si no un error de configuración vaciaría la base.
+
+**Pruebas:** `tests/test_semilla.py` (3 nuevas) comprueba que el archivo quitado sale con
+sus vectores, que lo subido por un usuario sobrevive y que sin cambios no se borra nada.
+`test_extraccion.py` contaba exactamente 16 archivos de conocimiento: ahora exige **al menos**
+16, para que agregar documentos no rompa la prueba. **80 pruebas.**
+
+**Ojo al probarlo:** el código del backend va dentro de la imagen, no montado. Después de
+cambiar código hay que reconstruir (`docker compose --profile publico up -d --build`); los
+archivos de `conocimiento/` sí están montados y no necesitan reconstruir nada.
+
+---
+
 ## Preparación para revisión de compañeros (17/10/2026)
 
 - **`README.md`** completo para que otra persona entienda y corra el proyecto: qué cumple del

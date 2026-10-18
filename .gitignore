@@ -35,3 +35,6 @@ Thumbs.db
 # graphify
 graphify-out/
 .vercel
+
+# Material local para la demo (no va al repositorio)
+local-demo/
