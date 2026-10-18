@@ -35,6 +35,15 @@ class Configuracion(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     chat_model: str = "qwen3.5:4b"
     embedding_model: str = "bge-m3"
+    # Mismo num_ctx en todas las llamadas: si cambia entre llamadas, Ollama recarga el modelo.
+    num_ctx: int = 4096
+    temperatura: float = 0.1
+
+    # --- Agente (RAG) ---
+    # Distancia coseno máxima para aceptar un fragmento (menor = más parecido).
+    # Calibrada con evaluacion/casos.json: ver ESTADO.md, paso 4.
+    umbral_distancia: float = 0.50
+    k_fragmentos: int = 4
 
     # --- Base de conocimiento ---
     coleccion: str = "patroclo_conocimiento"  # colección de PGVector

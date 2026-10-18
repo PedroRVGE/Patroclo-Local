@@ -11,6 +11,7 @@ dependencies = [
     "langchain-ollama>=1.1.0",
     "langchain-postgres>=0.0.19",
     "langchain-text-splitters>=1.1.3",
+    "langgraph>=1.2.16",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.16.0",
     "pydantic[email]>=2.14.1",
@@ -30,6 +31,8 @@ package = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = ["integracion: usa Postgres y Ollama reales (uv run pytest -m integracion)"]
+addopts = "-m 'not integracion'"
 
 [dependency-groups]
 dev = [

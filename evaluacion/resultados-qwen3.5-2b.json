@@ -1,0 +1,1023 @@
+{
+ "modelo": "qwen3.5:2b",
+ "umbral": 0.5,
+ "aciertos": 20,
+ "total": 20,
+ "resultados": [
+  {
+   "id": "R01",
+   "pregunta": "¿Qué quesos vende Del Pastor?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "02-catalogo-del-pastor.md",
+   "fuente_ok": false,
+   "segundos": 11.3,
+   "pregunta_independiente": "¿Qué quesos vende Del Pastor?",
+   "respuesta": "Del Pastor vende cuatro quesos de leche de cabra en toda Colombia: queso tipo griego (antes feta) en frasco de 200 g [2], queso feta en bloque de 500 g [2], queso ibérico de cabra en 110 g y 500 g [2], y queso crema de cabra en tarrina de 120 g [2].",
+   "fuentes": [
+    "01-del-pastor-la-marca.md",
+    "15-preguntas-frecuentes.md",
+    "15-preguntas-frecuentes.md",
+    "15-preguntas-frecuentes.md"
+   ],
+   "debe_mencionar": [
+    "tipo griego",
+    "feta en bloque",
+    "ibérico",
+    "crema"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1533
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.31, 0.31, 0.33, 0.33)",
+     "ms": 86
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 2339
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "249 caracteres, 4 fuentes",
+     "ms": 7377
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R02",
+   "pregunta": "¿Qué presentaciones de feta tienen?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "02-catalogo-del-pastor.md",
+   "fuente_ok": true,
+   "segundos": 9.3,
+   "pregunta_independiente": "¿Qué presentaciones de feta tienen?",
+   "respuesta": "El queso tipo griego en salmuera se presenta en frascos de 200 g. Según [1], también está disponible como feta en bloque para cocinas que porcionan a diario. Se utiliza principalmente para ensaladas, bowls y tablas.",
+   "fuentes": [
+    "02-catalogo-del-pastor.md",
+    "02-catalogo-del-pastor.md",
+    "09-recetas-tipo-griego-y-feta.md",
+    "15-preguntas-frecuentes.md"
+   ],
+   "debe_mencionar": [
+    "frasco de 200 g en salmuera",
+    "bloque de 500 g"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1497
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.42, 0.42, 0.43, 0.43)",
+     "ms": 113
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 2919
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "215 caracteres, 4 fuentes",
+     "ms": 4807
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R03",
+   "pregunta": "¿Por qué el ibérico antes se llamaba Manchego?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "06-queso-iberico-de-cabra.md",
+   "fuente_ok": true,
+   "segundos": 13.0,
+   "pregunta_independiente": "¿Por qué el ibérico antes se llamaba Manchego?",
+   "respuesta": "El nombre «Ibérico» se mantuvo como «antes Manchego» porque «Queso Manchego» es una Denominación de Origen Protegida que exige exclusivamente leche de ovejas de raza manchega. El queso del Del Pastor es de cabra, por lo que el antiguo nombre describía el estilo pero no el origen ni la especie de la leche. Se dejó el nombre a propósito para que quien busque «manchego» encuentre este producto específico [2].",
+   "fuentes": [
+    "15-preguntas-frecuentes.md",
+    "06-queso-iberico-de-cabra.md",
+    "02-catalogo-del-pastor.md",
+    "06-queso-iberico-de-cabra.md"
+   ],
+   "debe_mencionar": [
+    "Manchego es denominación de origen protegida",
+    "oveja manchega",
+    "el de Del Pastor es de cabra"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "modelo: FUERA_DE_DOMINIO, pero nombra términos del dominio → PRODUCTO_LACTEO",
+     "ms": 1567
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.28, 0.30, 0.35, 0.39)",
+     "ms": 101
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 3327
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "409 caracteres, 4 fuentes",
+     "ms": 8005
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R04",
+   "pregunta": "¿El queso tipo griego es lo mismo que el feta?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "05-queso-tipo-griego-feta.md",
+   "fuente_ok": true,
+   "segundos": 14.0,
+   "pregunta_independiente": "¿El queso tipo griego es lo mismo que el feta?",
+   "respuesta": "Sí, el queso tipo griego es lo mismo que el feta. Del Pastor lo presenta como «tipo griego (antes feta)» [3]. Es un queso fresco de cabra en salmuera con textura firme que se desmorona sin deshacerse [3]. Se vende en frasco de 200 g o bloque de 500 g [3]. Su nombre es una denominación de origen protegida de Grecia hecha con leche de oveja o cabra [1].",
+   "fuentes": [
+    "15-preguntas-frecuentes.md",
+    "05-queso-tipo-griego-feta.md",
+    "02-catalogo-del-pastor.md",
+    "05-queso-tipo-griego-feta.md"
+   ],
+   "debe_mencionar": [
+    "es el que muchos conocen como feta",
+    "Feta es DOP de Grecia"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1603
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.22, 0.30, 0.30, 0.32)",
+     "ms": 104
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 3084
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "353 caracteres, 4 fuentes",
+     "ms": 9237
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R05",
+   "pregunta": "¿El queso de cabra tiene lactosa?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "03-leche-de-cabra.md",
+   "fuente_ok": true,
+   "segundos": 13.2,
+   "pregunta_independiente": "¿El queso de cabra tiene lactosa?",
+   "respuesta": "Sí, la leche de cabra tiene lactosa en un nivel parecido al de la leche de vaca [1]. Aunque los quesos tienen menos lactosa que la leche, especialmente los madurados, esta cantidad puede ser suficiente para causar molestias digestivas en personas con intolerancia a la lactosa [2]. Por lo tanto, no es una alternativa segura para ellos. Si tienes intolerancia, debes consultar a tu médico antes de consumirlos [2].",
+   "fuentes": [
+    "03-leche-de-cabra.md",
+    "15-preguntas-frecuentes.md",
+    "15-preguntas-frecuentes.md",
+    "07-queso-crema-de-cabra.md"
+   ],
+   "debe_mencionar": [
+    "sí tiene lactosa",
+    "no es alternativa para intolerantes"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1655
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.20, 0.20, 0.33, 0.33)",
+     "ms": 93
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 2732
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "414 caracteres, 4 fuentes",
+     "ms": 8691
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R06",
+   "pregunta": "¿Por qué la mantequilla de cabra es blanca?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "14-otros-productos-de-cabra.md",
+   "fuente_ok": true,
+   "segundos": 11.9,
+   "pregunta_independiente": "¿Por qué la mantequilla de cabra es blanca?",
+   "respuesta": "La mantequilla de cabra es blanca porque la cabra convierte el betacaroteno del pasto en vitamina A incolora [1]. Por lo tanto, su grasa no tiene el pigmento amarillo que tiñe a la mantequilla de vaca. Además, la leche de cabra contiene más ácidos grasos de cadena media como el caproico, lo que contribuye a su color blanco y sabor característico [3].",
+   "fuentes": [
+    "14-otros-productos-de-cabra.md",
+    "15-preguntas-frecuentes.md",
+    "03-leche-de-cabra.md",
+    "08-como-se-hace-el-queso-de-cabra.md"
+   ],
+   "debe_mencionar": [
+    "betacaroteno",
+    "vitamina A incolora"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1649
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.26, 0.27, 0.31, 0.34)",
+     "ms": 107
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 2349
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "352 caracteres, 4 fuentes",
+     "ms": 7830
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R07",
+   "pregunta": "¿Dónde pastorean las cabras de Del Pastor?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "01-del-pastor-la-marca.md",
+   "fuente_ok": true,
+   "segundos": 9.3,
+   "pregunta_independiente": "¿Dónde pastorean las cabras de Del Pastor?",
+   "respuesta": "Las cabras de Del Pastor pastorean en Cundinamarca, Antioquia y Santander. Salen a pastorear todos los días y viven libres en potreros entre eucaliptos [1]. La empresa vende quesos de cabra en todo el país [4].",
+   "fuentes": [
+    "01-del-pastor-la-marca.md",
+    "15-preguntas-frecuentes.md",
+    "04-cabras-en-colombia.md",
+    "01-del-pastor-la-marca.md"
+   ],
+   "debe_mencionar": [
+    "Cundinamarca",
+    "Antioquia",
+    "Santander"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1576
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.26, 0.28, 0.38, 0.40)",
+     "ms": 111
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 2590
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "210 caracteres, 4 fuentes",
+     "ms": 5061
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R08",
+   "pregunta": "Dame una receta con queso crema de cabra",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "11-recetas-queso-crema.md",
+   "fuente_ok": true,
+   "segundos": 18.1,
+   "pregunta_independiente": "Dame una receta con queso crema de cabra",
+   "respuesta": "Aquí tienes una receta sencilla para un **Dip de queso crema de cabra**:\n\n**Ingredientes:**\n*   120 g de queso crema de cabra (en tarrina)\n*   3 cucharadas de yogur natural\n*   1 diente de ajo rallado\n*   Cebollín y eneldo picados\n*   Ralladura de limón, sal y pimienta\n\n**Pasos:**\n1. Mezcla el queso crema con el yogur hasta que quede liso [2].\n2. Añade el ajo, las hierbas, la ralladura, sal y pimienta [2].\n3. Sírvelo con un chorrito de aceite encima [2].\n\n*Nota: El queso crema se recomienda para desayunos o preparaciones dulces [1].*",
+   "fuentes": [
+    "11-recetas-queso-crema.md",
+    "11-recetas-queso-crema.md",
+    "11-recetas-queso-crema.md",
+    "11-recetas-queso-crema.md"
+   ],
+   "debe_mencionar": [
+    "ingredientes",
+    "pasos"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1555
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.27, 0.29, 0.30, 0.31)",
+     "ms": 93
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 2419
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "539 caracteres, 4 fuentes",
+     "ms": 14027
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R09",
+   "pregunta": "¿Cómo conservo el feta después de abrirlo?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "13-conservacion-y-seguridad.md",
+   "fuente_ok": true,
+   "segundos": 13.4,
+   "pregunta_independiente": "¿Cómo conservo el feta después de abrirlo?",
+   "respuesta": "Para conservar el feta después de abrirlo, guárdalo en un recipiente hermético cubierto con su propia salmuera casera. Si no tienes salmuera, usa una mezcla de ½ taza de leche entera, ½ taza de agua, 1½ cucharaditas de sal y ½ cucharadita de vinagre blanco [2]. No lo uses si la salmuera no cubre el queso; si es muy salado, déjalo 10 minutos en agua fría antes de servirlo [2].",
+   "fuentes": [
+    "13-conservacion-y-seguridad.md",
+    "13-conservacion-y-seguridad.md",
+    "13-conservacion-y-seguridad.md",
+    "13-conservacion-y-seguridad.md"
+   ],
+   "debe_mencionar": [
+    "cubierto por la salmuera",
+    "utensilio limpio",
+    "no congelar"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1595
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.30, 0.36, 0.40, 0.41)",
+     "ms": 86
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 2942
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "378 caracteres, 4 fuentes",
+     "ms": 8750
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R10",
+   "pregunta": "¿Con qué combina el queso ibérico?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "12-acompanamientos-y-tablas.md",
+   "fuente_ok": false,
+   "segundos": 24.3,
+   "pregunta_independiente": "¿Con qué combina el queso ibérico?",
+   "respuesta": "El queso ibérico se combina con varios productos según las recetas disponibles:\n\n*   **Queso crema de cabra**: Se mezcla con miel y nueces para formar una base antes de colocar los quesos [1].\n*   **Tipo griego**: Se corta en cubos y se baña con aceite de oliva y orégano antes de acomodarlos entre otros ingredientes [1].\n*   **Bocadillo veleño**: Se usa como acompañamiento o relleno junto al ibérico, tanto en tostadas como en la pasta [2] o [3].\n*   **Pan tostado o galletas**: Se sirven como base para las tostadas de ibérico con bocadillo veleño [2].\n*   **Uvas, nueces, almendras y aceitunas**: Son frutas y frutos secos que se añaden en los huecos entre los quesos en la preparación del plato [1].\n\nEn resumen, el ibérico combina con quesos de cabra, bocadillo veleño, pan tostado, uvas, nueces, almendras y aceitunas.",
+   "fuentes": [
+    "10-recetas-iberico.md",
+    "10-recetas-iberico.md",
+    "10-recetas-iberico.md",
+    "10-recetas-iberico.md"
+   ],
+   "debe_mencionar": [
+    "bocadillo veleño",
+    "frutos secos o frutas"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1718
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.34, 0.36, 0.37, 0.37)",
+     "ms": 139
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 3189
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "826 caracteres, 4 fuentes",
+     "ms": 19264
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R11",
+   "pregunta": "¿Cómo se hace un queso tipo feta?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "08-como-se-hace-el-queso-de-cabra.md",
+   "fuente_ok": false,
+   "segundos": 22.2,
+   "pregunta_independiente": "¿Cómo se hace un queso tipo feta?",
+   "respuesta": "El queso tipo feta se elabora siguiendo un proceso tradicional general [1]: la leche pasteurizada se inocula con cultivo y se calienta a 35 °C. Luego se agrega cuajo para coagular la caseína, lo que genera una cuajada cortada en moldes o bolsas de tela para escurrir el suero durante varias horas. Posteriormente, los bloques se salan hasta un 3% y se sala en seco unos días antes de madurar en salmuera al 7% durante semanas a temperatura ambiente y luego refrigerado con alta humedad [1].\n\n**Receta:**\n*   **Ingredientes:** Leche pasteurizada, cultivo (inoculante), cuajo.\n*   **Pasos:** Calentar leche a 35 °C, agregar cuajo, cortar la cuajada en moldes/bolsas, escurrir el suero, salar y madurar en salmuera [1].",
+   "fuentes": [
+    "05-queso-tipo-griego-feta.md",
+    "15-preguntas-frecuentes.md",
+    "05-queso-tipo-griego-feta.md",
+    "05-queso-tipo-griego-feta.md"
+   ],
+   "debe_mencionar": [
+    "cuajo",
+    "salmuera",
+    "proceso general, no la receta de la empresa"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1613
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.23, 0.31, 0.33, 0.33)",
+     "ms": 93
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 3521
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "716 caracteres, 4 fuentes",
+     "ms": 17006
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "R12",
+   "pregunta": "¿Cómo hago un pedido?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "01-del-pastor-la-marca.md",
+   "fuente_ok": true,
+   "segundos": 10.7,
+   "pregunta_independiente": "¿Cómo hago un pedido?",
+   "respuesta": "Para hacer un pedido a Del Pastor, puedes contactarnos por WhatsApp al +57 300 998 5423, que es la vía más rápida para pedidos y cotizaciones [1]. También puedes enviar tu solicitud por correo comercial@delpastor.com o utilizar el formulario de contacto en su sitio web [3]. Los precios y disponibilidad varían según el canal de comunicación.",
+   "fuentes": [
+    "15-preguntas-frecuentes.md",
+    "90-operacion-interna.md",
+    "01-del-pastor-la-marca.md"
+   ],
+   "debe_mencionar": [
+    "WhatsApp +57 300 998 5423"
+   ],
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1618
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "3 de 4 pasan el umbral 0.50 (distancias: 0.35, 0.39, 0.46, 0.53)",
+     "ms": 110
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 1947
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "342 caracteres, 3 fuentes",
+     "ms": 7031
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "X01",
+   "pregunta": "¿Cuál es la mejor receta de sushi?",
+   "debe": "rechazar",
+   "obtuvo": "rechazar",
+   "acierto": true,
+   "rechazo_literal": true,
+   "fuente_esperada": null,
+   "fuente_ok": null,
+   "segundos": 1.6,
+   "pregunta_independiente": "¿Cuál es la mejor receta de sushi?",
+   "respuesta": "No tengo suficiente información en mi base de conocimiento para responder esa pregunta. Si tienes un documento sobre el tema, puedes cargarlo en la sección Documentos.",
+   "fuentes": [],
+   "debe_mencionar": null,
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "FUERA_DE_DOMINIO",
+     "ms": 1603
+    },
+    {
+     "nodo": "rechazar",
+     "detalle": "mensaje literal",
+     "ms": 0
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "X02",
+   "pregunta": "¿Quién ganó el Mundial de 2022?",
+   "debe": "rechazar",
+   "obtuvo": "rechazar",
+   "acierto": true,
+   "rechazo_literal": true,
+   "fuente_esperada": null,
+   "fuente_ok": null,
+   "segundos": 1.4,
+   "pregunta_independiente": "¿Quién ganó el Mundial de 2022?",
+   "respuesta": "No tengo suficiente información en mi base de conocimiento para responder esa pregunta. Si tienes un documento sobre el tema, puedes cargarlo en la sección Documentos.",
+   "fuentes": [],
+   "debe_mencionar": null,
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "FUERA_DE_DOMINIO",
+     "ms": 1400
+    },
+    {
+     "nodo": "rechazar",
+     "detalle": "mensaje literal",
+     "ms": 0
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "X03",
+   "pregunta": "¿Cuánto cuesta el queso feta?",
+   "debe": "rechazar",
+   "obtuvo": "rechazar",
+   "acierto": true,
+   "rechazo_literal": true,
+   "fuente_esperada": null,
+   "fuente_ok": null,
+   "segundos": 4.3,
+   "pregunta_independiente": "¿Cuánto cuesta el queso feta?",
+   "respuesta": "No tengo suficiente información en mi base de conocimiento para responder esa pregunta. Si tienes un documento sobre el tema, puedes cargarlo en la sección Documentos.",
+   "fuentes": [],
+   "debe_mencionar": null,
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1389
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.40, 0.41, 0.41, 0.42)",
+     "ms": 113
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «NO» → insuficiente",
+     "ms": 2786
+    },
+    {
+     "nodo": "rechazar",
+     "detalle": "mensaje literal",
+     "ms": 0
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "X04",
+   "pregunta": "¿En qué año se fundó Del Pastor y quién la fundó?",
+   "debe": "rechazar",
+   "obtuvo": "rechazar",
+   "acierto": true,
+   "rechazo_literal": true,
+   "fuente_esperada": null,
+   "fuente_ok": null,
+   "segundos": 3.7,
+   "pregunta_independiente": "¿En qué año se fundó Del Pastor y quién la fundó?",
+   "respuesta": "No tengo suficiente información en mi base de conocimiento para responder esa pregunta. Si tienes un documento sobre el tema, puedes cargarlo en la sección Documentos.",
+   "fuentes": [],
+   "debe_mencionar": null,
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "modelo: FUERA_DE_DOMINIO, pero nombra términos del dominio → PRODUCTO_LACTEO",
+     "ms": 1606
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "3 de 4 pasan el umbral 0.50 (distancias: 0.45, 0.47, 0.50, 0.52)",
+     "ms": 200
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «NO» → insuficiente",
+     "ms": 1920
+    },
+    {
+     "nodo": "rechazar",
+     "detalle": "mensaje literal",
+     "ms": 0
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "X05",
+   "pregunta": "¿Qué vino va bien con el queso ibérico?",
+   "debe": "rechazar",
+   "obtuvo": "rechazar",
+   "acierto": true,
+   "rechazo_literal": true,
+   "fuente_esperada": null,
+   "fuente_ok": null,
+   "segundos": 4.5,
+   "pregunta_independiente": "¿Qué vino va bien con el queso ibérico?",
+   "respuesta": "No tengo suficiente información en mi base de conocimiento para responder esa pregunta. Si tienes un documento sobre el tema, puedes cargarlo en la sección Documentos.",
+   "fuentes": [],
+   "debe_mencionar": null,
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1387
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.43, 0.44, 0.44, 0.44)",
+     "ms": 112
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «NO» → insuficiente",
+     "ms": 2956
+    },
+    {
+     "nodo": "rechazar",
+     "detalle": "mensaje literal",
+     "ms": 0
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "X06",
+   "pregunta": "¿Cuál es la receta exacta con la que Del Pastor produce su feta?",
+   "debe": "rechazar",
+   "obtuvo": "rechazar",
+   "acierto": true,
+   "rechazo_literal": true,
+   "fuente_esperada": null,
+   "fuente_ok": null,
+   "segundos": 5.5,
+   "pregunta_independiente": "¿Cuál es la receta exacta con la que Del Pastor produce su feta?",
+   "respuesta": "No tengo suficiente información en mi base de conocimiento para responder esa pregunta. Si tienes un documento sobre el tema, puedes cargarlo en la sección Documentos.",
+   "fuentes": [],
+   "debe_mencionar": null,
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1559
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.33, 0.36, 0.36, 0.37)",
+     "ms": 198
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «NO» → insuficiente",
+     "ms": 3788
+    },
+    {
+     "nodo": "rechazar",
+     "detalle": "mensaje literal",
+     "ms": 0
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "S01",
+   "pregunta": "Hola, ¿qué tal?",
+   "debe": "saludar",
+   "obtuvo": "saludar",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": null,
+   "fuente_ok": null,
+   "segundos": 1.6,
+   "pregunta_independiente": "Hola, ¿qué tal?",
+   "respuesta": "¡Hola! Soy Patroclo, el experto en lácteos de cabra de Del Pastor. Puedo contarte sobre nuestros quesos (tipo griego, feta en bloque, ibérico y crema de cabra) y la línea a domicilio, la leche de cabra, cómo se elabora cada queso, su origen e historia, recetas, acompañamientos y cómo conservarlos. ¿Qué te gustaría saber?",
+   "fuentes": [],
+   "debe_mencionar": null,
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "sin historial: se usa tal cual",
+     "ms": 0
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "SALUDO",
+     "ms": 1608
+    },
+    {
+     "nodo": "responder_saludo",
+     "detalle": "mensaje fijo",
+     "ms": 0
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  },
+  {
+   "id": "H01",
+   "pregunta": "¿Y con qué lo sirvo?",
+   "debe": "responder",
+   "obtuvo": "responder",
+   "acierto": true,
+   "rechazo_literal": null,
+   "fuente_esperada": "12-acompanamientos-y-tablas.md",
+   "fuente_ok": true,
+   "segundos": 12.1,
+   "pregunta_independiente": "¿Con qué lo sirvo el queso ibérico de Del Pastor?",
+   "respuesta": "El queso ibérico de cabra se sirve en tablas, tostadas con bocadillo o rallado sobre pasta. También va en ensaladas, bowls o horneados [2]. Se recomienda sacar el queso de la nevera unos 20 minutos antes de servir para que se corte mejor [3].",
+   "fuentes": [
+    "06-queso-iberico-de-cabra.md",
+    "15-preguntas-frecuentes.md",
+    "10-recetas-iberico.md",
+    "12-acompanamientos-y-tablas.md"
+   ],
+   "debe_mencionar": null,
+   "pasos": [
+    {
+     "nodo": "reformular_pregunta",
+     "detalle": "«¿Con qué lo sirvo el queso ibérico de Del Pastor?»",
+     "ms": 2123
+    },
+    {
+     "nodo": "clasificar_intencion",
+     "detalle": "PRODUCTO_LACTEO",
+     "ms": 1458
+    },
+    {
+     "nodo": "recuperar_contexto",
+     "detalle": "4 de 4 pasan el umbral 0.50 (distancias: 0.29, 0.30, 0.30, 0.33)",
+     "ms": 191
+    },
+    {
+     "nodo": "evaluar_contexto",
+     "detalle": "juez: «SI» → suficiente",
+     "ms": 2162
+    },
+    {
+     "nodo": "generar_respuesta",
+     "detalle": "242 caracteres, 4 fuentes",
+     "ms": 6178
+    },
+    {
+     "nodo": "guardar_historial",
+     "detalle": "sin almacenamiento (modo evaluación)",
+     "ms": 0
+    }
+   ]
+  }
+ ]
+}

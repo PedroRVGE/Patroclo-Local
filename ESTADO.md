@@ -13,8 +13,8 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 | 1 | Esqueleto: docker-compose, FastAPI con `/health`, `.env.example`, `.gitignore` | ✅ 17/10 |
 | 2 | Autenticación completa y probada | ✅ 17/10 |
 | 3 | Ingesta: subir, listar, borrar, semilla | ✅ 17/10 |
-| 4 | Grafo LangGraph + pruebas + calibrar umbral | ⏳ siguiente |
-| 5 | `/api/chat` + historial | — |
+| 4 | Grafo LangGraph + pruebas + calibrar umbral | ✅ 17/10 |
+| 5 | `/api/chat` + historial | ⏳ siguiente |
 | 6 | Frontend | — |
 | 7 | Despliegue (frontend en la nube + ngrok) | — |
 | 8 | README, diagrama, capturas | — |
@@ -297,3 +297,83 @@ controles y no uno.
 
 **Pendiente (no bloquea):** límite de subidas por usuario; las subidas se procesan de forma
 síncrona (un PDF grande deja la petición abierta mientras se calculan los embeddings).
+
+---
+
+## Paso 4 — El agente: grafo LangGraph, umbral y evaluación (17/10/2026)
+
+**Qué se hizo**
+
+`backend/agents/`, un archivo por responsabilidad:
+
+| Archivo | Qué tiene |
+|---|---|
+| `estado.py` | `EstadoPatroclo` (TypedDict): pregunta, historial, pregunta_independiente, intencion, fragmentos, contexto_suficiente, respuesta, fuentes, rechazada, **pasos** (con reductor `operator.add`) |
+| `prompts.py` | Todos los prompts + los dos mensajes fijos (rechazo literal y saludo) |
+| `llm.py` | `crear_llm()` (Ollama, `reasoning=False`) y `limpiar()` (quita `<think>`) |
+| `nodos.py` | `NodosPatroclo`: los 8 nodos como métodos; el decorador `@paso` mide cada uno y agrega `{nodo, detalle, ms}` |
+| `grafo.py` | `construir_grafo()` con `StateGraph`, las 3 aristas condicionales y `crear_grafo_real()` |
+
+El diagrama, generado desde el código, está en `docs/grafo.md`.
+
+Scripts: `python -m app.calibrar_umbral` (distancias por caso, sin el modelo de chat) y
+`python -m app.evaluar [--modelo X]` (los 20 casos contra el grafo real; guarda
+`evaluacion/resultados-<modelo>.json`).
+
+**Control de alucinaciones: 7 estrategias** (el PDF pide 2)
+
+| # | Estrategia | Dónde | Quién decide |
+|---|---|---|---|
+| 1 | Umbral de distancia (0,50) | `recuperar_contexto` | código |
+| 2 | LLM juez «¿el contexto trae el dato pedido?» | `evaluar_contexto` | modelo (1 palabra) → código |
+| 3 | Prompt: solo el contexto, citar [n], nada propio | `generar_respuesta` | modelo |
+| 4 | Rechazo con el mensaje literal | `rechazar` | código (texto fijo) |
+| 5 | Fuentes con fragmento y similitud en la respuesta | `generar_respuesta` → UI | código |
+| 6 | Clasificador que corta lo fuera de dominio antes de buscar | `clasificar_intencion` | modelo → código |
+| 7 | Si el generador escribe `NO_SE`, se rechaza | arista `generar_respuesta → rechazar` | código |
+
+Además: si el clasificador devuelve algo que no está en la lista → `PRODUCTO_LACTEO` (deciden
+umbral y juez); si dice `FUERA_DE_DOMINIO` pero la pregunta nombra términos del dominio
+(queso, cabra, feta, Del Pastor…) → el código lo corrige a `PRODUCTO_LACTEO`.
+**Un fallo del modelo en un nodo de decisión nunca lleva a una respuesta inventada: siempre
+cae del lado del rechazo o de una verificación más.**
+
+**Por qué así**
+
+- **Las decisiones (aristas) las toma código** leyendo el estado; el modelo solo llena el
+  estado con una palabra. Es la separación del curso: el agente propone, el código controla.
+- **Nodos como métodos de una clase que recibe sus dependencias** (modelo, base vectorial,
+  función de guardado): las pruebas les pasan versiones falsas y la API las reales.
+- **El juez y el generador comparten el mismo mensaje de sistema con el contexto.** Ollama
+  reutiliza el prefijo ya procesado (caché KV): medido, 700 tokens de contexto pasan de 6 s
+  a 0,5 s en la segunda llamada. El contexto se lee una sola vez por pregunta.
+- **`reformular_pregunta` no llama al modelo si no hay historial**; **saludo y rechazo son
+  textos fijos**. Una pregunta normal hace 2 llamadas (juez + respuesta) más la
+  clasificación de una palabra.
+- **El mismo `num_ctx` (4096) en todas las llamadas**: si cambia, Ollama recarga el modelo.
+- **Sin checkpointer (`MemorySaver`)** como en `agente20262`: el historial va a Postgres
+  (paso 5), que sobrevive a reinicios y lo puede listar el frontend. El grafo recibe el
+  historial en el estado.
+- **Distancia coseno y no similitud:** `similarity_search_with_score` de PGVector devuelve
+  distancia (0 = idéntico). Al frontend se le muestra `similitud = 1 − distancia`.
+
+**Calibración del umbral** (`python -m app.calibrar_umbral`, mejor fragmento por caso)
+
+| Grupo | Distancias |
+|---|---|
+| Deben responderse (13, con H01 reformulada) | 0,199 – **0,418** (la peor: R02 «presentaciones de feta») |
+| Rechazar, del tema pero sin el dato (X03 precio, X04 fundación, X05 vino, X06 receta propia) | 0,329 · 0,399 · 0,431 · 0,453 |
+| Rechazar, fuera de dominio (X01 sushi, X02 Mundial) | **0,545** · 0,692 |
+
+**Umbral elegido: 0,50** — 0,08 por encima del peor caso bueno y por debajo de lo ajeno.
+**Lo que el umbral no puede hacer:** X03–X06 caen *dentro* (0,33–0,45), mezclados con las
+buenas. Ningún umbral los separa sin perder respuestas buenas: los rechaza el juez. Es el
+argumento para tener las dos estrategias.
+
+**Sobre `fuente_esperada`:** en R01, R10, R11 y H01 la fuente esperada no sale entre los 4
+primeros, pero los fragmentos que salen **sí responden** (p. ej. R01 encuentra la pregunta
+frecuente «¿Qué quesos vende Del Pastor?»; R11 la sección «Cómo se hace un queso tipo feta»
+de `05-…feta.md`). La base repite información entre archivos. Por eso el acierto se mide
+por comportamiento y la fuente se reporta aparte. *Sugerencia para Pedro:* en `casos.json`,
+R01 podría aceptar también `15-preguntas-frecuentes.md` y R11 `05-queso-tipo-griego-feta.md`
+(no se editó: es material de evaluación ya escrito).

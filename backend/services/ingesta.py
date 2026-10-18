@@ -69,6 +69,7 @@ def _fragmentos_de(documento: Documento, extraido: extraccion.Extraido):
     metadata_base = {
         "documento_id": str(documento.id),
         "nombre": documento.titulo,
+        "archivo": documento.nombre_original,
         "visibilidad": documento.visibilidad,
         "tema": meta.get("tema"),
         "productos": meta.get("productos") or [],
