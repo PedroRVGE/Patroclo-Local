@@ -133,7 +133,7 @@ Navegador ── Frontend React + Vite (desplegado: Vercel / Netlify / Cloudflar
 Backend FastAPI  (PC de Pedro, docker compose, expuesto con ngrok o Cloudflare Tunnel)
  ├─ auth        registro, ingreso, yo, salir
  ├─ chat        pregunta → grafo LangGraph → respuesta + fuentes + pasos
- ├─ documentos  subir · listar · borrar · reindexar
+ ├─ documentos  subir · listar · borrar   (reindexar: comando `python -m app.semilla --reindexar`)
  ├─ historial   conversaciones y mensajes del usuario
  └─ agente      grafo LangGraph ──▶ Ollama (contenedor `ollama-gpu` con GPU, ya existente)
                      │
@@ -209,8 +209,10 @@ Patroclo-Local/
   `visibilidad`, para poder **citarlo** y **borrarlo**.
 - `GET /api/documentos` lista; `DELETE /api/documentos/{id}` borra el documento **y sus
   vectores** (solo quien lo subió).
-- Un script `python -m app.semilla` indexa `conocimiento/` al arrancar si la colección está
-  vacía.
+- Un script `python -m app.semilla` indexa `conocimiento/` al arrancar (el contenedor lo
+  corre antes de uvicorn). Es idempotente: lo que ya está no se toca y un archivo que cambió
+  se reemplaza. `--reindexar` recalcula todos los vectores (al cambiar `EMBEDDING_MODEL`).
+  Los documentos de la semilla tienen `subido_por` NULL y no se pueden borrar desde la API.
 
 ### Historial
 

@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import obtener_configuracion
 from app.errores import registrar_manejadores
-from controllers import auth, health
+from controllers import auth, documentos, health
 from db.conexion import crear_tablas
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -54,3 +54,4 @@ registrar_manejadores(app)
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(documentos.router)

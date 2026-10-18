@@ -45,6 +45,13 @@ services:
       PG_HOST: postgres
       PG_PUERTO: "5432"
       OLLAMA_URL: ${OLLAMA_URL_DOCKER:-http://host.docker.internal:11434}
+      CONOCIMIENTO_DIR: /app/conocimiento
+      SUBIDAS_DIR: /app/subidas
+    volumes:
+      # La semilla se lee de la carpeta del repo (solo lectura).
+      - ./conocimiento:/app/conocimiento:ro
+      # Copia de cada documento indexado: sobrevive a reconstruir el contenedor.
+      - subidas:/app/subidas
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -56,3 +63,5 @@ services:
 volumes:
   pgdata:
     name: patroclo-pgdata
+  subidas:
+    name: patroclo-subidas

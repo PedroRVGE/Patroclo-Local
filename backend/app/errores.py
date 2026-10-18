@@ -11,6 +11,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
+from services.modelo_local import ModeloNoDisponible
+
 log = logging.getLogger("patroclo.errores")
 
 
@@ -22,6 +24,15 @@ def registrar_manejadores(app: FastAPI) -> None:
         return JSONResponse(
             status_code=503,
             content={"detalle": "La base de datos no está disponible.", "id_error": id_error},
+        )
+
+    @app.exception_handler(ModeloNoDisponible)
+    async def modelo_no_disponible(request: Request, exc: ModeloNoDisponible) -> JSONResponse:
+        id_error = uuid.uuid4().hex[:12]
+        log.error("error %s: modelo local no disponible en %s %s (%s)", id_error, request.method, request.url.path, exc)
+        return JSONResponse(
+            status_code=503,
+            content={"detalle": "El modelo local no está disponible. Intenta de nuevo en un momento.", "id_error": id_error},
         )
 
     @app.exception_handler(Exception)

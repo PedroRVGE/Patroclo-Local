@@ -1,8 +1,18 @@
 """Comprobaciones sobre el servidor de Ollama (el contenedor `ollama-gpu`)."""
 
 import httpx
+import ollama
 
 from app.config import obtener_configuracion
+
+# Lo que lanza el cliente de Ollama (y por tanto OllamaEmbeddings/ChatOllama):
+#   ConnectionError       → el servidor no responde
+#   ollama.ResponseError  → responde pero falla (p. ej. el modelo no está descargado)
+ERRORES_OLLAMA = (ConnectionError, ollama.ResponseError, httpx.HTTPError)
+
+
+class ModeloNoDisponible(Exception):
+    """El modelo local no responde. La API lo traduce a 503 con un mensaje claro."""
 
 
 def modelos_instalados() -> list[str]:

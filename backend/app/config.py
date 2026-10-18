@@ -36,6 +36,12 @@ class Configuracion(BaseSettings):
     chat_model: str = "qwen3.5:4b"
     embedding_model: str = "bge-m3"
 
+    # --- Base de conocimiento ---
+    coleccion: str = "patroclo_conocimiento"  # colección de PGVector
+    conocimiento_dir: str = "../conocimiento"  # semilla (en Docker: /app/conocimiento)
+    subidas_dir: str = "subidas"  # copia de cada documento indexado (para reindexar)
+    tamano_maximo_mb: int = 10
+
     # --- Autenticación (JWT propio) ---
     # Sin valor por defecto a propósito: si falta en .env, la API no arranca.
     jwt_secreto: SecretStr = Field(min_length=32)

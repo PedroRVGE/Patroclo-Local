@@ -12,8 +12,8 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 |---|---|---|
 | 1 | Esqueleto: docker-compose, FastAPI con `/health`, `.env.example`, `.gitignore` | ✅ 17/10 |
 | 2 | Autenticación completa y probada | ✅ 17/10 |
-| 3 | Ingesta: subir, listar, borrar, semilla | ⏳ siguiente |
-| 4 | Grafo LangGraph + pruebas + calibrar umbral | — |
+| 3 | Ingesta: subir, listar, borrar, semilla | ✅ 17/10 |
+| 4 | Grafo LangGraph + pruebas + calibrar umbral | ⏳ siguiente |
 | 5 | `/api/chat` + historial | — |
 | 6 | Frontend | — |
 | 7 | Despliegue (frontend en la nube + ngrok) | — |
@@ -177,3 +177,123 @@ quepa entero en la GPU.
 
 **Pendiente (no bloquea):** límite de intentos en `/ingresar` contra fuerza bruta. Por
 ahora argon2 hace cada intento caro (~50–100 ms); se anota como mejora.
+
+---
+
+## Paso 3 — Ingesta de documentos (17/10/2026)
+
+**Qué se hizo**
+
+| Ruta / comando | Qué hace |
+|---|---|
+| `POST /api/documentos` (multipart: `archivo`, `visibilidad` opcional) | Valida, extrae, fragmenta, vectoriza y guarda. 201 «N fragmentos indexados»; 200 si ese contenido ya estaba |
+| `GET /api/documentos` | Lista con título, tipo, fragmentos, visibilidad, quién lo subió y `puede_borrar` |
+| `DELETE /api/documentos/{id}` | Borra fila, vectores y archivo. Solo quien lo subió (403 si no) |
+| `python -m app.semilla` | Indexa `conocimiento/*.md` (sin el README). Corre al arrancar el contenedor |
+| `python -m app.semilla --reindexar` | Recalcula todos los vectores (al cambiar `EMBEDDING_MODEL`) |
+
+El flujo (PDF §2.4), archivo por archivo:
+
+```text
+recibir ──▶ validar (extensión, ≤10 MB, contenido) ──▶ sha256 ¿ya existe? ──sí──▶ devolver el existente
+                                                              │ no
+                                                              ▼
+extraer (services/extraccion.py) ──▶ fragmentar (services/fragmentacion.py)
+   ──▶ guardar copia en subidas/<uuid>.<ext> ──▶ embeddings bge-m3 + PGVector ──▶ fila `documento` ──▶ confirmar
+                          (si algo falla aquí: se borran vectores y archivo, no queda la fila)
+```
+
+- **`services/extraccion.py`**: PDF (pypdf, por página), DOCX (python-docx, párrafos y
+  tablas), MD (con frontmatter YAML → metadata), TXT y CSV (cada fila «columna: valor»).
+  **Valida que el contenido cuadre con la extensión**: PDF empieza por `%PDF-`, DOCX es un ZIP
+  con `word/document.xml`, los de texto no tienen bytes nulos. El título sale del
+  frontmatter (MD) o de las propiedades del archivo (PDF/DOCX) y si no, del nombre.
+- **`services/fragmentacion.py`**: Markdown por encabezados (`MarkdownHeaderTextSplitter`) y
+  después 1000/200 por caracteres; lo demás 1000/200 por página. **Cada fragmento empieza
+  con «Documento: … | Sección: …»**.
+- **`vectorstore/almacen.py`**: `PGVector` (langchain-postgres) sobre el mismo engine de la
+  app, con `OllamaEmbeddings(bge-m3)`, metadata en JSONB. **Ids deterministas
+  `{documento_id}:{n}`**.
+- **`services/ingesta.py`**: `ingerir`, `listar`, `borrar`, `eliminar`, `reindexar`.
+- Metadata de cada fragmento: `documento_id`, `nombre` (título), `pagina`, `seccion`,
+  `fragmento`, `visibilidad`, `tema`, `productos`.
+- Tabla `documento`: id, nombre_original, titulo, tipo, sha256 (único), tamano_bytes,
+  nombre_archivo (generado), subido_por (NULL = semilla), subido_en, fragmentos, visibilidad.
+- Docker: `conocimiento/` montado en solo lectura y un volumen `patroclo-subidas` para las
+  copias. Ollama caído → 503 «El modelo local no está disponible».
+- 25 pruebas nuevas (**45 en total**): `test_extraccion.py` y `test_documentos.py`.
+
+**Por qué así**
+
+- **Ids deterministas en vez de `uuid4()` y nada de `pre_delete_collection`:** las dos
+  referencias del profesor duplican fragmentos o borran la colección entera en cada
+  ingesta. Con `{documento_id}:{n}` borrar un documento es borrar exactamente esos ids, y
+  reindexar los reescribe.
+- **Idempotencia por sha256 del contenido** (no por nombre): el mismo PDF con otro nombre
+  tampoco se duplica.
+- **Fragmentar por encabezados + línea de contexto:** la base está escrita en secciones `##`
+  cortas (una receta, una pregunta frecuente). Así cada fragmento es una unidad de sentido, y
+  el embedding de «1. Corta el queso…» sabe que es de las «Tostadas de ibérico».
+- **Extraer con pypdf/python-docx directamente** y no con los loaders de
+  langchain-community: se valida el contenido antes de escribir nada en disco, y se controla
+  la metadata (frontmatter, título del PDF).
+- **Se guarda copia del archivo** (con nombre generado, nunca el del usuario: evita rutas
+  como `../../x`): sin ella no se podría reindexar al cambiar de modelo de embeddings.
+- **Los documentos de la semilla no se pueden borrar desde la API** (`subido_por` NULL):
+  ningún usuario puede dejar al agente sin su base de conocimiento.
+- **Visibilidad por defecto `interno`** al subir (lo seguro), salvo que el usuario elija o
+  el frontmatter diga otra cosa.
+- **Reindexar es un comando, no un endpoint:** recalcula todo (≈1 min) y solo tiene sentido
+  al cambiar de modelo; no debe poder dispararlo cualquier usuario.
+
+**Cómo se probó**
+
+- `uv run pytest` → **45 pruebas pasan** (PGVector reemplazado por un almacén falso en
+  memoria): indexa y confirma fragmentos, ids y metadata correctos, nombre en disco generado
+  (también con `../../etc/malicioso.md`), mismo archivo dos veces no duplica, visibilidad,
+  extensión / PDF falso / sin extensión → 400, >10 MB → 413, **Ollama caído → 503 y no
+  queda ni fila, ni vectores, ni archivo**, solo el dueño borra, la semilla no se borra.
+- **Real (Docker + Postgres + bge-m3):**
+  - Semilla: **16 archivos → 131 fragmentos** (125 `publico`, 6 `interno`), vectores de
+    1024 dimensiones. El primer archivo tardó 61 s (carga en frío de bge-m3); los demás,
+    2–5 s cada uno. Reiniciando el contenedor: «0 indexados ahora, 16 ya estaban».
+  - Por la API con curl: sin token 401 → subir el PDF de la demo 201 «5 fragmentos» →
+    subirlo otra vez 200 «no se duplicó» → borrarlo 204 → **0 vectores de la guía en la
+    base**, de vuelta a 131 → borrar uno de la semilla 403 → PDF falso 400.
+  - `--reindexar`: 16 documentos, 131 fragmentos, 57 s.
+
+**Primera mirada a las distancias (material para calibrar el umbral en el paso 4)**
+
+Distancia coseno de `similarity_search_with_score` (menor = más parecido), mejor resultado:
+
+| Pregunta | Distancia | Fragmento |
+|---|---|---|
+| ¿El queso de cabra tiene lactosa? | 0,199 | La leche de cabra › ¿Tiene lactosa? |
+| ¿Por qué el ibérico antes se llamaba Manchego? | 0,276 | Preguntas frecuentes › esa misma pregunta |
+| ¿Qué vino va con el queso ibérico? (sin la guía) | **0,426** | Recetas con ibérico › Tostadas… (no habla de vino) |
+| ¿Qué vino va con el queso ibérico? (con la guía) | 0,380 | Guía de maridaje, p. 1 |
+| receta de sushi | 0,494 | Recetas con feta › Ensalada griega |
+| ¿Cuál es la capital de Francia? | 0,632 | Queso crema › Un poco de historia |
+
+**Conclusión:** el umbral separa bien lo ajeno (≥ 0,49) de lo bueno (≤ 0,35), pero **la
+pregunta de vinos sin la guía cae en 0,43**: cerca de fragmentos del mismo tema que no la
+responden. Un umbral solo no basta para rechazarla: hace falta el **nodo juez**
+(`evaluar_contexto`). Es el mejor ejemplo para explicar en la sustentación por qué hay dos
+controles y no uno.
+
+**Qué falló y cómo se resolvió**
+
+1. **Una prueba no compilaba:** un literal `b"""…"""` con tildes (los `bytes` solo admiten
+   ASCII). Se cambió a `"""…""".encode()`.
+2. **El PDF de la demo aparecía como «guia-maridaje-vinos-quesos-de-cabra»** (nombre del
+   archivo). Se toma el título de las propiedades del PDF: ahora sale «Guía de maridaje:
+   vinos y quesos de cabra».
+3. **La consola de Windows (cp1252) no imprime «→» ni «›»** en scripts de prueba: se usa
+   `PYTHONIOENCODING=utf-8`. Y **Git Bash reescribe rutas como `/app/subidas`** al pasarlas a
+   `docker exec`: se antepone `MSYS_NO_PATHCONV=1`.
+4. **Para saber qué excepción atrapar cuando Ollama falla** se probó en vivo: servidor caído →
+   `ConnectionError`; modelo no descargado → `ollama.ResponseError`. Las dos se traducen a
+   `ModeloNoDisponible` → 503.
+
+**Pendiente (no bloquea):** límite de subidas por usuario; las subidas se procesan de forma
+síncrona (un PDF grande deja la petición abierta mientras se calculan los embeddings).

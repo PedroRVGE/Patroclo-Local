@@ -21,9 +21,11 @@ RUN uv sync --locked --no-dev
 
 COPY . .
 
-RUN chown -R app:app /app
+RUN mkdir -p /app/subidas && chown -R app:app /app
 USER app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Primero la semilla (rápida si ya está todo indexado; si Ollama no responde, avisa y
+# sigue), después la API.
+CMD ["sh", "-c", "python -m app.semilla; exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]

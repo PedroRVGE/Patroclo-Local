@@ -18,13 +18,41 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.config import obtener_configuracion
 from app.main import app
 from db.conexion import obtener_sesion
 from db.modelos import Base
+from vectorstore.almacen import obtener_almacen
+
+
+class AlmacenFalso:
+    """Reemplaza a PGVector en las pruebas: guarda los fragmentos en un diccionario.
+
+    `falla_con` simula que Ollama no responde al calcular los embeddings.
+    """
+
+    def __init__(self):
+        self.fragmentos: dict = {}
+        self.falla_con: Exception | None = None
+
+    def add_documents(self, documents, ids):
+        if self.falla_con:
+            raise self.falla_con
+        self.fragmentos.update(zip(ids, documents))
+        return ids
+
+    def delete(self, ids):
+        for i in ids:
+            self.fragmentos.pop(i, None)
 
 
 @pytest.fixture
-def cliente():
+def almacen():
+    return AlmacenFalso()
+
+
+@pytest.fixture
+def cliente(almacen, tmp_path, monkeypatch):
     # StaticPool: una sola conexión compartida, si no cada conexión vería su propia
     # base en memoria vacía.
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
@@ -35,7 +63,10 @@ def cliente():
         with fabrica() as sesion:
             yield sesion
 
+    # Los archivos subidos van a una carpeta temporal de la prueba.
+    monkeypatch.setattr(obtener_configuracion(), "subidas_dir", str(tmp_path / "subidas"))
     app.dependency_overrides[obtener_sesion] = sesion_de_prueba
+    app.dependency_overrides[obtener_almacen] = lambda: almacen
     # Sin `with`: no corre el lifespan, así que no intenta conectarse a Postgres.
     yield TestClient(app, raise_server_exceptions=False)
     app.dependency_overrides.clear()

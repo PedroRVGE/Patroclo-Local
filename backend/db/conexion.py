@@ -28,9 +28,14 @@ def _fabrica_sesiones() -> sessionmaker[Session]:
     return sessionmaker(bind=obtener_engine(), expire_on_commit=False)
 
 
+def nueva_sesion() -> Session:
+    """Sesión para scripts fuera de una petición (semilla, evaluación). Usar con `with`."""
+    return _fabrica_sesiones()()
+
+
 def obtener_sesion() -> Iterator[Session]:
     """Dependencia de FastAPI: una sesión por petición, cerrada siempre al final."""
-    with _fabrica_sesiones()() as sesion:
+    with nueva_sesion() as sesion:
         yield sesion
 
 
