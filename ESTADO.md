@@ -28,7 +28,7 @@ cómo se resolvió. De aquí sale el apartado «problemas encontrados» del docu
 | Postgres | Contenedor `patroclo-postgres`, `pgvector/pgvector:pg16`, extensión `vector` 0.8.7, en `127.0.0.1:5435` |
 | API | Contenedor `patroclo-api` en `127.0.0.1:8000`, o `uv run uvicorn app.main:app --reload` desde `backend/` |
 | Python | 3.12.13 manejado por uv (`backend/.python-version`) |
-| GitHub | https://github.com/PedroRVGE/Patroclo-Local — **privado** por ahora; el PDF exige enlace público: `gh repo edit PedroRVGE/Patroclo-Local --visibility public --accept-visibility-change-consequences` antes del domingo |
+| GitHub | https://github.com/PedroRVGE/Patroclo-Local — **público** desde el 17/10 (historial limpiado antes; ver «Limpieza antes de publicar») |
 
 ---
 
@@ -670,3 +670,52 @@ terracota). Arranca con `npm run dev --prefix frontend` (o `preview_start` con
   arrancaba la API con un secreto publicado en GitHub**. Ahora la configuración rechaza
   cualquier `POSTGRES_PASSWORD` o `JWT_SECRETO` que empiece por `<CAMBIAR` (prueba en
   `test_config.py`, que lee el `.env.example` real). **77 pruebas.**
+
+---
+
+## Limpieza antes de publicar el repositorio (17/10/2026)
+
+Antes de hacer público el repositorio se auditó **todo el historial** (no solo los archivos
+actuales), porque al publicarlo cualquiera puede ver cualquier commit viejo.
+
+**Lo que se buscó y no apareció:** `.env` nunca se versionó; la contraseña de la base y el
+secreto JWT reales no están en ningún commit; no hay tokens (GitHub, ngrok, claves de API),
+rutas del PC ni la contraseña de la cuenta de prueba; `referencias/` nunca se subió.
+**Publicar el código no expone el computador:** solo ngrok lo haría, y está detrás del
+perfil `publico`; los puertos de la base y la API escuchan solo en `127.0.0.1`.
+
+**Lo que se limpió (decisión de Pedro):**
+
+- `conocimiento/90-operacion-interna.md` se reemplazó por una **guía interna de atención
+  genérica**, marcada como documento de ejemplo. Sigue sirviendo para demostrar el filtro de
+  visibilidad: el Patroclo interno la recupera (distancia 0,24 para «¿qué hago si un cliente
+  reclama?») y con el filtro `solo_publico` no aparece.
+- Se quitaron las menciones al sistema interno de la empresa y a su dominio en `CLAUDE.md` y
+  en las fuentes de `conocimiento/`.
+- La captura `docs/capturas/04-documentos.jpg` se volvió a tomar (mostraba el título viejo).
+- En `evaluacion/resultados-qwen3.5-4b.json`, la respuesta de R12 citaba la versión vieja
+  del documento interno: esa frase quedó **tachada con una nota visible** («Texto retirado al
+  publicar el repositorio…»). No se reescribió la respuesta para no falsear el resultado; el
+  conteo (19/20) no cambia.
+
+**Cómo se reescribió el historial:**
+
+1. Respaldo completo de la historia original en un `git bundle` (fuera del repositorio, en
+   la carpeta temporal de la sesión).
+2. `git-filter-repo` sobre un clon: las mismas reglas de reemplazo en **todas las versiones
+   de todos los archivos**, y el `90` viejo y la captura vieja borrados de todo el historial;
+   después, un commit que agrega las versiones limpias. El contenido final quedó idéntico al
+   del repositorio de trabajo.
+3. **Problema:** `git-filter-repo` aplica primero las reglas literales y después las de
+   expresiones regulares, así que la regla general dejó variantes que las específicas ya no
+   reconocían (en versiones viejas de `CLAUDE.md` y de las fuentes). Se encontró con una
+   búsqueda en cada versión de cada archivo y se corrigió con una segunda pasada.
+4. Verificación: 0 coincidencias de los términos retirados en las 12 versiones del
+   historial y 0 objetos sueltos.
+5. **El repositorio viejo de GitHub no se reescribió encima** (GitHub conserva un tiempo los
+   commits viejos y se pueden abrir por su identificador): se renombró a
+   `Patroclo-Local-respaldo-privado` (sigue **privado**) y se creó `Patroclo-Local` nuevo con
+   el historial limpio. Pedro puede borrar el viejo desde GitHub cuando quiera.
+
+Los identificadores de los commits cambiaron; por eso este archivo ya no cita commits por
+su identificador.
