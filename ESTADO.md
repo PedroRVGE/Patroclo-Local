@@ -609,7 +609,7 @@ terracota). Arranca con `npm run dev --prefix frontend` (o `preview_start` con
 
 ## Paso 7 — Despliegue: PREPARADO, PENDIENTE (17/10/2026)
 
-**Ya está hecho (commit `491256e`)**
+**Ya está hecho**
 
 - `docker-compose.yml`: servicio `ngrok` (imagen `ngrok/ngrok:3`) detrás del perfil
   **`publico`**. `docker compose up` no expone nada; para publicar hay que pedirlo:
